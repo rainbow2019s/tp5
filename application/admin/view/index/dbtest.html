@@ -1,0 +1,34 @@
+<html>
+<head>
+<title>hello {$name}</title>
+</head>
+<body>
+    hello, {$name}!
+
+    <table>
+        <tr>
+            <th>id</th>
+            <th>code</th>
+            <th>nums</th>
+        </tr>
+        {foreach name='result' item='item'}
+
+
+        <tr>
+            <td>{$item.id}</td>
+            <td>{$item.code}</td>
+            <td>{$item.nums}</td>
+        </tr>
+
+        {/foreach}
+
+        <?php foreach($result as $item):?>
+            <tr>
+                <td><?=$item['id']?></td>
+                <td><?=$item['code']?></td>
+                <td><?=$item['nums']?></td>
+            </tr>
+        <?php endforeach;?>
+    </table>
+</body>
+</html>

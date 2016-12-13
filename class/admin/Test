@@ -1,0 +1,11 @@
+<?php
+
+namespace class/admin;
+
+class Test
+{
+    public function show()
+    {
+        echo "abcdefe";
+    }
+}
