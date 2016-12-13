@@ -45,5 +45,8 @@ class User extends Controller
         $type4=empty($cc2);
         var_dump($type4);
 
+
+        
+
     }
 }
