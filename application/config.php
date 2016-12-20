@@ -87,7 +87,7 @@ return [
     // URL普通方式参数 用于自动生成
     'url_common_param'       => false,
     // URL参数方式 0 按名称成对解析 1 按顺序解析
-    'url_param_type'         => 0,
+    'url_param_type'         => 1,
     // 是否开启路由
     'url_route_on'           => true,
     // 路由使用完整匹配
@@ -208,6 +208,8 @@ return [
         'type'           => '',
         // 是否自动开启 SESSION
         'auto_start'     => true,
+        'path'           => 'G:/xampp/tmp/tp5',
+        //'name'           => 'tp5',
     ],
 
     // +----------------------------------------------------------------------

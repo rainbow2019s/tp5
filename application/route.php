@@ -13,6 +13,8 @@ use think\Route;
 
 Route::rule('test/:id', 'admin/user/test');
 Route::rule('testurl/:name','admin/trade_liquid/testurl');
+//Route::rule('urlparams/:name/:city','admin/user/urlparams');
+
 
 return [
     '__pattern__' => [
@@ -21,5 +23,7 @@ return [
     '[hello]'     => [
         ':id'   => ['index/hello', ['method' => 'get'], ['id' => '\d+']],
         ':name' => ['index/hello', ['method' => 'post']],
-    ]
+    ],
+    'urlparams/:name/:city' =>['admin/user/urlparams',
+    ['method'=>'get','ext'=>'html']]
 ];

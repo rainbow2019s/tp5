@@ -2,6 +2,8 @@
 namespace app\admin\controller;
 
 use think\Controller;
+use think\Url;
+use think\Session;
 
 class User extends Controller
 {
@@ -17,6 +19,20 @@ class User extends Controller
         //return $this->fetch();
     }
 
+    public function get()
+    {
+        echo $this->request->domain();
+        echo "<br/>";
+        echo $this->request->baseFile();
+        echo "<br/>";
+        echo $this->request->url();
+        echo "<br/>";
+        echo $this->request->url(true);
+        echo "<br/>";
+        echo $this->request->baseUrl();
+        echo "<br/>";
+    }
+
     public function test($id)
     {
         echo $id;
@@ -30,23 +46,48 @@ class User extends Controller
 
     public function abc()
     {
-        $aa=null;
-        $type=empty($aa);
-        var_dump($type);  # bool(false)
+        echo $this->request->url();
 
-        $bb;
-        $type2=empty($bb);
-        var_dump($type2); # bool(false);
+        $user=new \stdClass;
+        $user->id=23;
+        $user->name='刘好';
 
-        $type3=empty($cc);
-        var_dump($type3);
+        $this->request->bind('user',$user);
 
-        $cc2=[];
-        $type4=empty($cc2);
-        var_dump($type4);
+        echo "<br/>";
+        echo $this->request->user->id;
 
+    }
 
-        //b1
+    public function bbc()
+    {
+        define("PI",3.14);
+        
+        echo PI*3*3;
+        echo "<br/>";
+        echo constant("PI")*3*3;
+    }
 
+    public function magicConst()
+    {
+        echo __FILE__;
+        echo __DIR__;
+        echo __LINE__;
+    }
+
+    public function urlParams($name,$city)
+    {
+        echo $name.','.$city;
+        echo Url::build('urlparams',['name'=>'lh2016','city'=>'shanghai']);
+
+        //Session::set('name','l.hao');
+        //echo Session::get('name');
+        //echo Session::pull('name');
+        echo "<br/>-----------------------------<br/>";
+        if(!Session::has('name')){
+            Session::set('name','l.hao.2012@qq.com');
+        }
+        
+        echo Session::get('name');
     }
 }
