@@ -10,7 +10,7 @@ use think\View;
 
 //use admin;
 
-class TradeLiquid extends Controller
+class AppModule extends Controller
 {
     public function __construct()
     {
@@ -21,11 +21,16 @@ class TradeLiquid extends Controller
             'path' => APP_PATH . 'logs/']);
     }
 
-    public function testURL($name)
+
+    public function add($params)
     {
-        echo "URL".$name;
+
     }
 
+    public function get($id)
+    {
+
+    }
 
     public function index()
     {
