@@ -6,25 +6,71 @@ use think\Db;
 use think\Log;
 use think\View;
 
+
 use stdClass;
+use think\Session;
 use app\admin\model\User as UserModel;
+
 
 class Auth extends Controller
 {
     private $_user;
-
+    /**
+     * 构造方法
+     *
+     *
+     * @throws Exception
+     */
     public function __construct(UserModel $userModel)
     {
         parent::__construct();
 
         $this->_user=$userModel;
 
-        // Log::init([
-        //     'type' => 'File',
-        //     'path' => APP_PATH . 'logs/']);
+    }
+
+    /**
+     * 进入首页
+     *
+     * @throws Exception
+     */
+    public function index()
+    {
+
+        $exist = Session::has('user');
+        // 如果Session中没有用户信息，则跳转登录
+        if(empty($exist)){
+            $this->redirect('auth/login');           
+        }
+        
+        $user=Session::get('user');
+        $this->assign('user',json_encode($user));
+        return view();
+    }
+
+    // 后台登录
+    public function login()
+    {
+
+        Session::flash('code','1234');
+        $this->assign('code','1234');
+        return view();
+    }
+
+    // Ajax提交后台登录
+    public function loginSubmit($params='')
+    {
+         $code=Session::pull('code');
+         $user=new stdClass;
+         $user->name='l.hao';
+         $user->phone='18015826672';
+         $user->email='l.hao.2012@qq.com';
+         Session::set('user',$user);
+         dump($code);
     }
 
 
+    // 测试用途
     public function test()
     {
         //$admin=$this->_user->getSuperAdmin();
@@ -36,94 +82,5 @@ class Auth extends Controller
         dump($this->_user->getAdmin($admin));
     }
 
-    public function testURL($name)
-    {
-        echo "URL".$name;
-    }
-
-
-    public function index()
-    {
-        return $this->success("操作成功","dbTest");
-
-        //return "Hello ThinkPHP";
-    }
-
-    public function baidu()
-    {
-        $this->assign('name','');
-        $data=new \stdClass;
-        $data->id=123;
-        $data->name='张三';
-        $this->assign('user',$data);    
-
-        return view();
-    }    
-
-
-    public function hello($name='123')
-    {
-
-        $this->assign('name', $name);
-        return $this->fetch();
-    }
-
-    public function dbTest()
-    {
-
-        //$result = Db::query('select id,code,nums from scg_factory where nums>:nums', ['nums' => 0]);
-
-        //$this->assign('name', 'TP');
-        //return $this->fetch('index/dbtest', ['name' => 'TP']);
-        //
-        //Log::write('读取数据库成功');
-        //Log::write(json_encode($result));
-
-        $user=model("admin/index/User");
-
-        $view = new View();
-        return $view->fetch('index/dbtest', ['name' => 'TP2', 'result' => $user->getFactory()]);
-    }
-
-
-    public function dbTest2()
-    {
-        $factory=Db::name('scg_factory')->find();
-        var_dump($factory);
-    }
-
-    public function phpview()
-    {
-        $view = new View();
-
-        //$view_path=APP_PATH.DS.'admin'
-        return $view->engine('php')->fetch();
-    }
-
-    public function arrayTest()
-    {
-        $arr = ['a' => 1, 14, 'b' => 7, 8];
-        asort($arr);
-        print_r($arr);
-        var_dump($arr);
-        #array(4) { ["a"]=> int(1) ["b"]=> int(7) [1]=> int(8) [0]=> int(14) }
-        ksort($arr);
-        print_r($arr);
-        #Array ( [a] => 1 [b] => 7 [0] => 14 [1] => 8 )
-    }
-
-    public function classTest()
-    {
-        $admin = new \admin\Test();
-        $admin->show();
-
-        //$user = model('User');
-        //echo $user->getId();
-
-        //$user = Loader::model('User');
-        //echo $user->getId();
-        //$user = new \app\admin\model\User;
-        //echo $user->getId();
-    }
 
 }

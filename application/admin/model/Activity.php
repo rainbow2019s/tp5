@@ -38,7 +38,9 @@ class Activity extends Model
         $rows = Db::execute('insert into ep_activities(name,domain,host_ip_address,is_enabled,
             entrance_url,entrance_alias,timestamp) values(
                 :name,:domain,:host_ip_address,1,:entrance_url,:entrance_alias,now())',
-                ['name'=>$activity->name,'domain'=>$activity->name,
+                ['name'=>$activity->name,
+                    'domain'=>$activity->domain,
+                    'host_ip_address'=>$activity->host_ip_address,
                     'entrance_url'=>$activity->entrance_url,
                     'entrance_alias'=>$activity->entrance_alias]); 
 

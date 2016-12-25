@@ -6,11 +6,19 @@ use think\Db;
 use think\Log;
 use think\View;
 
+use stdClass;
+use app\admin\model\Activity as ActivityModel;
+
 class Activity extends Controller
 {
-    public function __construct()
+    private $_activity;
+
+
+    public function __construct(ActivityModel $activityModel)
     {
         parent::__construct();
+        
+        $this->_activity=$activityModel;
 
         // Log::init([
         //     'type' => 'File',
@@ -18,15 +26,51 @@ class Activity extends Controller
     }
 
 
-    public function add($params)
+    // 获取所有有效的应用
+    public function getAllEnabled()
     {
+        return Json($this->_activity->getAllEnabled());
+    }
+
+    // 获取所有无效的应用
+    public function getAllDisabled()
+    {
+        return Json($this->_activity->getAllDisabled());
+    }
+
+    // 获取所有应用（有效和无效）
+    public function getAll()
+    {
+        return Json($this->_activity->getAll());     
+    }
+
+    // 注册应用
+    public function add($params='')
+    {
+        //TODO: 调试时打开
+        //$activity=json_decode($params);
+        $activity = new stdClass;
+        $activity->name='知识库';
+        $activity->domain='';
+        $activity->host_ip_address='127.0.0.1';
+        $activity->entrance_url='/tech/index';
+        $activity->entrance_alias='知识问答';
+
+
+        $rows=$this->_activity->add($activity);
+        return Json($rows);
 
     }
 
-    public function get($id)
+    // 移除一个小应用
+    public function remove($id)
     {
+        $rows=$this->_activity->remove($id);
 
     }
+
+
+
 
     public function index()
     {
