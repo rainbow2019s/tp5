@@ -56,6 +56,6 @@ class Activity extends Model
     // 假删除进回收站
     public function remove($id)
     {
-        return Db::execute('update ep_admin_users set is_enabled=!is_enabled where id=:id',['id'=>$id]);        
+        return Db::execute('update ep_activities set is_enabled=!is_enabled where id=:id',['id'=>$id]);        
     }
 }

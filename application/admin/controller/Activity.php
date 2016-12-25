@@ -6,19 +6,15 @@ use think\Db;
 use think\Log;
 use think\View;
 
-//use admin\index\;
-
-//use admin;
-
-class AppModule extends Controller
+class Activity extends Controller
 {
     public function __construct()
     {
         parent::__construct();
 
-        Log::init([
-            'type' => 'File',
-            'path' => APP_PATH . 'logs/']);
+        // Log::init([
+        //     'type' => 'File',
+        //     'path' => APP_PATH . 'logs/']);
     }
 
 

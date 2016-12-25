@@ -29,10 +29,6 @@ class User extends Controller
 
         $this->_user=$userModel;
 
-
-
-
-
         // Log::init([
         //     'type' => 'File',
         //     'path' => APP_PATH . 'logs/']);
