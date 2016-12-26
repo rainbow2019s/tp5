@@ -36,7 +36,6 @@ class Auth extends Controller
      */
     public function index()
     {
-
         $exist = Session::has('user');
         // 如果Session中没有用户信息，则跳转登录
         if(empty($exist)){
@@ -51,17 +50,19 @@ class Auth extends Controller
     // 后台登录
     public function login()
     {
-
         Session::flash('code','1234');
         $this->assign('code','1234');
         return view();
     }
 
     // Ajax提交后台登录
-    public function loginSubmit($params='')
+    // 用户登录后在Session里应保存的信息
+    
+    public function ajaxlogin($params='')
     {
          $code=Session::pull('code');
          $user=new stdClass;
+         $user->id=1;
          $user->name='l.hao';
          $user->phone='18015826672';
          $user->email='l.hao.2012@qq.com';
@@ -81,6 +82,4 @@ class Auth extends Controller
 
         dump($this->_user->getAdmin($admin));
     }
-
-
 }

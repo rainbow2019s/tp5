@@ -105,8 +105,68 @@ class User extends Model
         return Db::execute('update ep_admin_users set is_enabled=!is_enabled where id=:id',['id'=>$id]);        
     }
 
+    // 普通管理员绑定功能列表和未绑定的    
+    public function adminBindAllActivities($adminId)
+    {
+        return Db::query(
+            'select a.id as activity_id,a.name,
+	            ifnull(aa.ep_admin_users_id,0) as selected
+	            from ep_activities a 
+		            left join ep_admin_app aa on a.id=aa.ep_activities_id 
+                    and aa.ep_admin_users_id=?',[$adminId]);
+    }
 
+    // 普通管理员绑定功能列表
+    public function adminBindActivities($adminId)
+    {
+        return Db::query(
+            'select a.id as activity_id,a.name
+	            from ep_activities a 
+		            inner join ep_admin_app aa on a.id=aa.ep_activities_id 
+                        and aa.ep_admin_users_id=?',[$adminId]);
+    }
 
+    // 普通管理员绑定应用功能
+    public function bind($adminId,$activityId=[])
+    {
+        Db::startTrans();
+        try{
+            foreach($activityId as $id){
+                Db::execute('insert into ep_admin_app(ep_activities_id,ep_admin_users_id) values(?,?)',
+                    [$id,$adminId]);
+                
+            }           
 
+            Db::commit();
+            return true;
+
+        }catch(\Exception $e){
+            Db::rollback();
+        }
+
+        return false;
+    }
     
+    // 普通管理员解绑应用功能
+    public function unbind($adminId,$activityId=[])
+    {
+        Db::startTrans();
+        try{
+            foreach($activityId as $id){
+                Db::execute('delete from ep_admin_app where ep_activities_id=? and ep_admin_users_id=?',
+                    [$id,$adminId]);
+            }          
+
+            Db::commit();
+            return true;
+
+        }catch(\Exception $e){
+            Db::rollback();
+        }   
+
+        return false;     
+    }
+
+
+
 }

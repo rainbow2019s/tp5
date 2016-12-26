@@ -50,11 +50,11 @@ class Activity extends Controller
         //TODO: 调试时打开
         //$activity=json_decode($params);
         $activity = new stdClass;
-        $activity->name='知识库';
+        $activity->name='知识库3';
         $activity->domain='';
         $activity->host_ip_address='127.0.0.1';
-        $activity->entrance_url='/tech/index';
-        $activity->entrance_alias='知识问答';
+        $activity->entrance_url='/tech3index';
+        $activity->entrance_alias='知识问答3';
 
 
         $rows=$this->_activity->add($activity);

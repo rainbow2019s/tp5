@@ -28,12 +28,6 @@ class User extends Controller
         parent::__construct();
 
         $this->_user=$userModel;
-
-        // Log::init([
-        //     'type' => 'File',
-        //     'path' => APP_PATH . 'logs/']);
-
-
     }
 
     
@@ -79,6 +73,26 @@ class User extends Controller
         $rows=$this->_user->add($admin);
         return Json($rows);
 
+    }
+
+    // 普通管理员绑定应用功能
+    public function bind($params='')
+    {
+        $status=$this->_user->bind(1,[1,2,3]);
+        dump($status);
+    }
+
+    // 普通管理员解绑应用功能
+    public function unbind($params='')
+    {
+        $status=$this->_user->unbind(1,[2,3]);
+        dump($status);
+
+    }
+
+    public function adminBindActivities($params='')
+    {
+        return Json($this->_user->adminBindActivities(1));
     }
 
 
