@@ -6,13 +6,15 @@
     ecopro login
 
 
+    <div><img src="{:captcha_src()}" alt="captcha" /></div>
+
     <form method="post" action="__ROOT__/admin/auth/ajaxlogin">
         <label>用户帐号:</label>
         <input type="text" name="username" placeholder="手机号或邮箱" />
         <label>用户密码:</label>
         <input type="password" name="password" placeholder="请输入密码" />
-        <label>验证码：({$code})</label>
-        <input type="text" name="code" placeholder="请输入验证码" /> 
+        <label>验证码：</label>
+        <input type="text" name="captcha" placeholder="请输入验证码" /> 
         <input type="submit" value="提交" />
     </form>
 </body>

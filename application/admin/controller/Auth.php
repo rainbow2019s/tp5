@@ -50,8 +50,8 @@ class Auth extends Controller
     // 后台登录
     public function login()
     {
-        Session::flash('code','1234');
-        $this->assign('code','1234');
+        //Session::flash('code','1234');
+        //$this->assign('code','1234');
         return view();
     }
 
@@ -60,14 +60,21 @@ class Auth extends Controller
     
     public function ajaxlogin($params='')
     {
-         $code=Session::pull('code');
+         //$code=Session::pull('code');
+
+         $captcha=input('captcha');
+         if(!captcha_check($captcha)){
+             $this->redirect('auth/login');
+         }
+
+
          $user=new stdClass;
          $user->id=1;
          $user->name='l.hao';
          $user->phone='18015826672';
          $user->email='l.hao.2012@qq.com';
          Session::set('user',$user);
-         dump($code);
+         dump($captcha);
     }
 
 

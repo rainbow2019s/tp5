@@ -6,9 +6,7 @@ use think\Db;
 use think\Log;
 use think\View;
 
-//use admin\index\;
-
-//use admin;
+use ecopro\TestAdd;
 
 class Index extends Controller
 {
@@ -23,9 +21,7 @@ class Index extends Controller
 
     public function index()
     {
-        return $this->success("操作成功","dbTest");
-
-        //return "Hello ThinkPHP";
+        return TestAdd::add(1,2);
     }
 
     public function baidu()
@@ -34,8 +30,11 @@ class Index extends Controller
         $data=new \stdClass;
         $data->id=123;
         $data->name='张三';
-        $this->assign('user',$data);    
-
+        $this->assign('user',$data);  
+        $this->assign('time',time());
+        $this->assign('str','AbcDeFghiJK');
+        //echo strtoupper(substr($str,0,5));
+       
         return view();
     }    
 

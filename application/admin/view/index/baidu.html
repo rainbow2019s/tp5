@@ -9,5 +9,14 @@
         <li>{$user->id}</li>
         <li>{$user->name}</li>
     </ul>
+
+
+    <p>Time:{$time|date='Y-m-d H:i:s',###}</p>
+
+    <p>{$str|substr=0,5|strtoupper}
+
+    <p>{$Age|default='这个家伙很懒，什么也没留下'}</p>    
+
+    <p>函数的第2种写法：{:strtoupper(substr($str,0,5))}
 </body>
 </html>

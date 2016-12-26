@@ -23,7 +23,9 @@
         "topthink/think-testing": "^1.0",
         "tanghao2018/tfpdf":">=1.2.4",
         "tanghao2018/phpexcel":">=1.8.1",
-        "endroid/qrcode":">=1.7.4"        
+        "tanghao2018/hattedcode":">=1.0",
+        "endroid/qrcode":">=1.7.4",
+        "topthink/think-captcha": "^1.0"        
     },
     "extra": {
         "think-path": "thinkphp"

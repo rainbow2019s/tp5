@@ -9,6 +9,14 @@ use think\View;
 use stdClass;
 use app\admin\model\Activity as ActivityModel;
 
+/**
+ *
+ * 用于功能的增删改查
+ * 
+ */
+
+
+
 class Activity extends Controller
 {
     private $_activity;
@@ -20,9 +28,6 @@ class Activity extends Controller
         
         $this->_activity=$activityModel;
 
-        // Log::init([
-        //     'type' => 'File',
-        //     'path' => APP_PATH . 'logs/']);
     }
 
 

@@ -16,7 +16,7 @@ use phpexcel\PHPExcel;
 use phpexcel\phpexcel\PHPExcel_IOFactory;
 
 
-
+use ecopro\Verification;
 use app\admin\model\User as UserModel;
 
 class User extends Controller
@@ -100,7 +100,10 @@ class User extends Controller
     // 以下为测试代码
     //-------------------------------------------------------------
 
-
+    public function tt()
+    {
+        return Verification::generate();
+    }
 
     public function index()
     {
