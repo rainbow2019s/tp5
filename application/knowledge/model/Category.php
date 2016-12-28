@@ -49,7 +49,7 @@ class Category extends Model
     }
 
 
-    // 删除一个节点
+    // 删除一个作物或病虫害节点节点
     public function remove($id)
     {
         Db::startTrans();

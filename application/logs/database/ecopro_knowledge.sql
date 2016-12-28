@@ -32,9 +32,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `ecopro_knowledge`.`ep_detail`
+-- Table `ecopro_knowledge`.`ep_repository`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `ecopro_knowledge`.`ep_detail` (
+CREATE TABLE IF NOT EXISTS `ecopro_knowledge`.`ep_repository` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `category_name` CHAR(20) NOT NULL,
   `disease` TEXT NULL,

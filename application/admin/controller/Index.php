@@ -34,6 +34,8 @@ class Index extends Controller
         $this->assign('time',time());
         $this->assign('str','AbcDeFghiJK');
         //echo strtoupper(substr($str,0,5));
+        $this->assign('arr',[1,2,3,9,8]);
+        $this->assign('arr2',[[1,2,3],[4,5,6]]);
        
         return view();
     }    
