@@ -47,6 +47,7 @@ class User extends Controller
     public function getAll()
     {
         return Json($this->_user->getAll());     
+        
     }
 
 

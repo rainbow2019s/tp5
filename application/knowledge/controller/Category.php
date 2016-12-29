@@ -84,4 +84,9 @@ class Category extends Controller
 
         return Json($result);
     }
+
+    public function getCropClassify($callback='')
+    {
+        return $callback!=''?Json($this->_category->getCropClassify()):Jsonp($this->_category->getCropClassify());
+    }
 }

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VUE</title>
+</head>
+
+<body>
+
+
+
+<div id="app">
+  <button @click="homeHandler">Home</button>
+  <button @click="listHandler">List</button>
+  <component :is="currentView"></component>
+</div>
+
+
+<script id="home_template" type="text/v-template">
+    <div>
+        <p>Home</p>
+        <p>This is a home</p>
+    </div>
+</script>
+
+
+<script id="list_template" type="text/v-template">
+    <div>
+        <p>List</p>
+        <p>This is a list</p>
+        <ul>
+            <li v-for="d in list">编号：{{leftPad(d.id,3)}} 姓名:{{d.name}}</li>
+            <!--<li>编号：2 姓名=lishi</li>-->
+        </ul>
+    </div>
+</script>
+
+
+<script src="__COMMON__/vue-1.0.26/vue.js"></script>
+<script src="__COMMON__/vue-router-2.1.1/vue-router.js"></script>
+<script type="text/javascript">
+
+    (function(Vue){
+
+        
+
+        //const leftPad=(num,n)=>('AA00'+num).slice(-n)
+        //Vue.filter('leftPad',leftPad)
+
+
+        var loadTemplate=function(name){
+            return document.getElementById(name+"_template").innerHTML;
+        }
+
+
+        var homeComponent = Vue.extend({
+            template: loadTemplate('home')
+        })
+
+        var listComponent = Vue.extend({
+            template: loadTemplate('list'),
+            data:function(){
+                return {list: [
+                    {"id":"1","name":"zhangsan"},
+                    {"id":"2","name":"lishi"},
+                    {"id":"3","name":"lishi"},
+                    {"id":"4","name":"lishi"},
+                    {"id":"5","name":"lishi"},
+                    {"id":"6","name":"lishi"},
+                    {"id":"7","name":"lishi"},
+                    {"id":"8","name":"lishi"},
+                    {"id":"9","name":"lishi"}
+                    ]};
+            },
+            methods:{
+                leftPad:function(num,n){
+                    return ('00'+num).slice(-n);
+                }
+            }
+        })
+
+
+        Vue.component('home', homeComponent)
+        Vue.component('list', listComponent)
+        var app = new Vue({
+            el: '#app',
+            data: {
+                currentView: 'home'
+            },
+            methods: {
+                homeHandler:function(event){
+                    if(this.currentView!='home'){
+                        this.currentView='home';
+                    }
+                   
+                },
+                listHandler:function(event){
+                    if(this.currentView!='list'){
+                        this.currentView='list';
+                    }
+                    
+                }
+            }
+        })
+
+    })(Vue);
+
+
+// 在路由处理器中切换页面
+//app.currentView = 'list'
+
+</script> 
+
+</body>
+</html>    
