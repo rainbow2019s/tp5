@@ -1,28 +1,37 @@
-<!doctype html>
-<html lang="en">
- <head>
-  <meta charset="UTF-8">
-  <meta name="Generator" content="EditPlus®">
-  <meta name="Author" content="">
-  <meta name="Keywords" content="">
-  <meta name="Description" content="">
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Document</title>
-
-
  </head>
- <body>
-  
-<div id="app">
-      <h1>Hello App!</h1>
-      <p>
-        <!-- use v-link directive for navigation. -->
-        <a v-link="{ path: '/foo' }">Go to Foo</a>
-        <a v-link="{ path: '/bar' }">Go to Bar</a>
-      </p>
-      <!-- use router-view element as route outlet -->
-      <router-view></router-view>
+ <body id='app'>
+  <header>
+    <div>
+      <a v-link="{name:'home'}">home</a>
+      <span>这里是标题区域</span>
+      <a v-link="{name:'list'}">list</a>
     </div>
+  </header>
+  <section>
+       <router-view></router-view>
+  </section>
 
+  <script id="home_template" type="text/v-template">
+    <img src='assets/home.jpg' style='width:100%' />
+  </script>
+
+   <script id="list_template" type="text/v-template">
+    <ul>
+      <li v-for="d in list">
+        <a v-link="{name:'detail',params:{id:d.id}}">{{d.id|leftPad 3}}:{{d.name}}</a>
+      </li>
+    </ul>
+  </script> 
+
+  <script id="detail_template" type="text/v-template">
+    <p>你选了 {{detail.name}} </p>
+  </script>
 
   <script src="../../static/common/vue-1.0.26/vue.js"></script>  
   <script src="../../static/common/vue-router-0.7.13/vue-router.js"></script>
@@ -30,42 +39,81 @@
   <script type="text/javascript">
 	
   (function(Vue){
+
+    var list=[
+          {"id":"1","name":"aaa"},
+          {"id":"2","name":"bbb"},
+          {"id":"3","name":"ccc"},
+          {"id":"4","name":"ddd"},
+          {"id":"5","name":"eee"},
+          {"id":"6","name":"fff"},
+          {"id":"7","name":"ggg"},
+          {"id":"8","name":"hhh"}
+        ]
 			
+    var loadTemplate = function(name){
+      return document.getElementById(name+"_template").innerHTML;
+    }  
+
+    Vue.filter('leftPad',function(num,n){
+        return ('00'+num).slice(-n);
+    })
+
 		// define some components
-var Foo = Vue.extend({
-  template: '<p>This is foo!</p>'
-})
+    var Home = Vue.extend({
+      template: loadTemplate('home')
+    })
 
-var Bar = Vue.extend({
-  template: '<p>This is bar!</p>'
-})
+    var List = Vue.extend({
+      template: loadTemplate('list'),
+      data:function(){
+        return {list:list}
+      }
+    })
 
-// the router needs a root component to render.
-// for demo purposes, we will just use an empty one
-// because we are using the HTML as the app template.
-var App = Vue.extend({})
+    var Detail = Vue.extend({
+      template: loadTemplate('detail'),
+      data:function(){
+        return {detail:{}}
+      },
+      route:{
+        data:function(transition){
+          var id=transition.to.params.id;
+          if(!id){
+            route.go('/home');
+            return;
+          }
 
-// create a router instance
-// you can pass in additional options here, but
-// let's keep it simple for now.
-var router = new VueRouter()
+           return {detail:list.find(s=>s.id===id)}
+        }
+      }
+    })
 
-// define some routes.
-// each route should map to a component.
-// we'll talk about nested routes later.
-router.map({
-  '/foo': {
-    component: Foo
-  },
-  '/bar': {
-    component: Bar
-  }
-})
+    var App = Vue.extend({})
 
-// now we can start the app!
-// router will create an instance of App and mount to
-// the element matching the selector #app.
-router.start(App, '#app')
+    var router = new VueRouter()
+
+    router.map({
+      '/home': { 
+        name:'home',
+        component: Home },
+      '/list': { 
+        name:'list',
+        component: List },
+      // 路由参数
+      '/detail/:id': { 
+        name:'detail',
+        component: Detail },
+      '*':{ 
+        name:'home',
+        component: Home }
+    })
+
+    // 默认跳转后到home
+    //router.redirect({'*':'/home'})
+
+    router.start(App, '#app')
+
 	})(Vue)
 
   </script>
