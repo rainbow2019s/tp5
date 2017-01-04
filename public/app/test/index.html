@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Document</title>
+ </head>
+ <body>
+
+
+    <div id="app">
+        <button v-on:click="getMessage">getMessage</button>
+        <ul>
+            <li v-for="m in message">
+                {{format(m.id,3)}} : {{m.name}}
+            </li>
+        </ul>
+   
+    </div>
+
+
+
+  <script src="../../static/common/vue-1.0.26/vue.js"></script>  
+  <script src="../../static/common/vue-router-0.7.13/vue-router.js"></script>
+  <script src="../../static/common/vue-resource-1.0.3/vue-resource.js"></script>
+  <script type="text/javascript">
+	
+new Vue({
+            el:'#app',
+            data:{
+                message:[]
+            },
+			methods:{
+                format:function(num,n){
+                    return ('00'+num).slice(-n);    
+                },
+				getMessage:function(){
+					//console.log('getMessage');
+			// ?callback=jsonpReturn可以省略		
+                this.$http.jsonp('http://localhost/thinkphp/tp5/knowledge/category/getcropclassify?callback=jsonpReturn')
+						.then(res=>{
+							//console.log(res.data)
+                            this.message=res.data;
+					})
+				}
+			}
+        });
+
+  </script>
+
+ </body>
+</html>

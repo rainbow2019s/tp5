@@ -4,5 +4,17 @@
 </head>
 <body>
     hello, {$name}!
+    今天是：{$day}
+
+    {if condition='$day==1'}
+        星期一
+    {elseif condition='$day==2'/}
+        星期二
+    {elseif condition='$day==3'/}
+        星期三
+    {else/}
+        星期四
+    {/if}
+    
 </body>
 </html>

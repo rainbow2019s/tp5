@@ -17,6 +17,9 @@ use phpexcel\phpexcel\PHPExcel_IOFactory;
 
 
 use ecopro\Verification;
+use ecopro\Weixin;
+
+
 use app\admin\model\User as UserModel;
 
 class User extends Controller
@@ -100,6 +103,15 @@ class User extends Controller
     //-------------------------------------------------------------
     // 以下为测试代码
     //-------------------------------------------------------------
+
+    public function getWeixinAccessToken()
+    {
+        $weixin=new Weixin(NULL);
+    
+        //return $weixin->getAccessTokenURL();
+        $weixin->getAccessToken();
+        return $weixin->setCustomMenu(NULL);
+    }
 
     public function tt()
     {

@@ -77,19 +77,18 @@ class User extends Model
     // 获取管理员信息
     public function getSuperAdmin()
     {
-        $single=Db::query('select id,name,phone,email,password,token from ep_admin_users 
+        $rows=Db::query('select id,name,phone,email,password,token from ep_admin_users 
             where is_enabled=1 and is_super=1 limit 1');
-        return $single;
+        return reset($rows);
     }
 
     // 获取管理员
     public function getAdmin($admin)
     {
-        $single=Db::query('select id,name,phone,email,password,token from ep_admin_users
+        $rows=Db::query('select id,name,phone,email,password,token from ep_admin_users
           where is_enabled=1 and is_super=0 and phone=:phone limit 1',
-          ['phone'=>$admin->phone]);
-          
-          return $single;
+          ['phone'=>$admin->phone]);          
+          return reset($rows);
     }
 
     // 更新管理员信息

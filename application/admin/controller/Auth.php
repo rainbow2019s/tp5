@@ -58,23 +58,41 @@ class Auth extends Controller
     // Ajax提交后台登录
     // 用户登录后在Session里应保存的信息
     
-    public function ajaxlogin($params='')
+    public function ajaxlogin()
     {
          //$code=Session::pull('code');
 
-         $captcha=input('captcha');
-         if(!captcha_check($captcha)){
-             $this->redirect('auth/login');
-         }
+         $params=input('params');
+         $userForm=json_decode($params);
+
+        //$captcha=input('captcha');
+        if(!captcha_check($userForm->captcha)){
+            //$this->redirect('auth/login');
+            return Json(['result'=>'error','message'=>'验证码不正确','data'=>'']);
+        }
+
+        $superAdmin=$this->_user->getSuperAdmin();
+        //dump($superAdmin);
+
+        if($superAdmin['phone']!=$userForm->username && $superAdmin['email']!=$userForm->username){
+              return Json(['result'=>'error','message'=>'用户名不正确','data'=>'']);
+        }
+
+        if(md5($userForm->password.$superAdmin['token'])!==$superAdmin['password']){
+            return Json(['result'=>'error','message'=>'用户密码不正确','data'=>'']);
+        }
 
 
-         $user=new stdClass;
-         $user->id=1;
-         $user->name='l.hao';
-         $user->phone='18015826672';
-         $user->email='l.hao.2012@qq.com';
-         Session::set('user',$user);
-         dump($captcha);
+        $user=new stdClass;
+        $user->id=$superAdmin['id'];
+        $user->name=$superAdmin['name'];
+        $user->phone=$superAdmin['phone'];
+        $user->email=$superAdmin['email'];
+        $user->password=$userForm->password;
+        Session::set('user',$user);
+        //dump($captcha);
+
+        return Json(['result'=>'success','message'=>'','data'=>URL('index')]);
     }
 
 

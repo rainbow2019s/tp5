@@ -142,7 +142,8 @@ return [
     'view_replace_str'       => [
         '__ROOT__'=>'/thinkphp/tp5',
         '__COMMON__'=>'/thinkphp/tp5/static/common',
-        '__ADMIN__'=>'/thinkphp/tp5/static/admin'],
+        '__ADMIN__'=>'/thinkphp/tp5/static/admin',
+        '__ADMIN_CONTROL__'=>'/thinkphp/tp5/admin'],
 
     // 默认跳转页面对应的模板文件
     'dispatch_success_tmpl'  => THINK_PATH . 'tpl' . DS . 'dispatch_jump.tpl',
@@ -246,13 +247,14 @@ return [
     //验证码
     'captcha' => [
         // 验证码字符集合
-        'codeSet' => '2345678abcdefhijkmnpqrstuvwxyzABCDEFGHJKLMNPQRTUVWXY',
+        //'codeSet' => '2345678abcdefhijkmnpqrstuvwxyzABCDEFGHJKLMNPQRTUVWXY',
+        'codeSet' => '2345678',
         // 验证码字体大小(px)
-        'fontSize' => 12,
+        'fontSize' => 14,
         // 是否画混淆曲线
         'useCurve' => false,
         // 验证码图片高度
-        'imageH' => 24,
+        'imageH' => 36,
         // 验证码图片宽度
         'imageW' => 100,
         // 验证码位数

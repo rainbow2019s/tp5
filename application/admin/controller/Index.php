@@ -45,6 +45,7 @@ class Index extends Controller
     {
 
         $this->assign('name', $name);
+        $this->assign('day',date('N',time()));
         return $this->fetch();
     }
 

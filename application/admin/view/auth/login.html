@@ -1,21 +1,84 @@
-<html>
+<!doctype html>
+<html lang="zh-CN">
+
 <head>
-<title>ecopro login</title>
+    <meta charset="UTF-8">
+    <title>ecopro login</title>
+    <style type="text/css">
+    #login{
+        width: 1190px; margin:0 auto; position: relative;
+    }
+    .block{
+            display: block;
+    }
+    .w250{width:250px;}
+    .mt5{margin-top: 5px;}
+    .mb5{margin-bottom: 5px;}
+    .w150{width: 150px;}
+    .mr5{margin-right: 5px;}
+    .ml5{margin-left: 5px;}
+  </style>
 </head>
+
 <body>
-    ecopro login
+    <div id="login">
+        <div style="left:600px; top:100px;position: absolute;width:300px; border: 1px solid #000;">
+<form>
+    <label class="block mt5 mb5 ml5">用户帐号:</label>
+    <input type="text" id="username" name="username" class="w250 ml5" />
+    <label class="block mt5 mb5 ml5">用户密码:</label>
+    <input type="password" id="password" name="password" class="w250 ml5" />
+    <label class="block mt5 mb5 ml5">验证码：</label>
+    <input type="text" id="captcha" name="captcha" class="w150 mr5 ml5" />
+    <img src="{:captcha_src()}" alt="captcha" onclick="this.src=this.src+'?'" style="cursor:pointer"/> </br>
+<input id="submit" type="submit" value="提交" class="mt5 ml5 mb5" />
+</form>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
 
+<script type="text/javascript">
+    $('#submit').click(function () {
+        var username = $('#username').val();
+        var password = $('#password').val();
+        var captcha = $('#captcha').val();
+        if (username == '') {
+            alert("用户账户不能为空！");
+            return false;
+        }
 
-    <div><img src="{:captcha_src()}" alt="captcha" /></div>
+        if (password == '') {
+            alert("密码不能为空！");
+            return false;
+        }
 
-    <form method="post" action="__ROOT__/admin/auth/ajaxlogin">
-        <label>用户帐号:</label>
-        <input type="text" name="username" placeholder="手机号或邮箱" />
-        <label>用户密码:</label>
-        <input type="password" name="password" placeholder="请输入密码" />
-        <label>验证码：</label>
-        <input type="text" name="captcha" placeholder="请输入验证码" /> 
-        <input type="submit" value="提交" />
-    </form>
+        if (captcha == '') {
+            alert("验证码：不能为空！");
+            return false;
+        }
+
+        $.ajax({
+            url: '__ADMIN_CONTROL__/auth/ajaxlogin',
+            type: 'post',
+            data: { params: JSON.stringify({ username: username, password: password, captcha: captcha }) },
+            //dataType:'json'
+        }).done(
+            function (data) {
+                console.log(data);
+                //window.location.href=data;
+                window.location.href = data.data;
+                return false;
+
+            }, function (data) {
+                console.log(data);
+                return false;
+            }
+            );
+
+        return false;
+
+    });
+</script>
 </body>
+
 </html>
