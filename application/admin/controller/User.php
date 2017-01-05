@@ -18,6 +18,8 @@ use phpexcel\phpexcel\PHPExcel_IOFactory;
 
 use ecopro\Verification;
 use ecopro\Weixin;
+use ecopro\SubMenu;
+
 
 
 use app\admin\model\User as UserModel;
@@ -31,6 +33,16 @@ class User extends Controller
         parent::__construct();
 
         $this->_user=$userModel;
+    }
+
+
+    public function index()
+    {
+        $user=Session::get('user');
+        $this->assign('user',$user);
+        $this->assign('menu',SubMenu::getMenu('platform'));
+
+        return view();
     }
 
     
@@ -118,16 +130,6 @@ class User extends Controller
         return Verification::generate();
     }
 
-    public function index()
-    {
-        //echo $id;
-        //$this->error('我也不知道'); # 默认返回前一页
-
-        $this->assign('value', 'World!');
-        return view();
-
-        //return $this->fetch();
-    }
 
     public function appTest()
     {

@@ -32,6 +32,7 @@
     <input type="text" id="captcha" name="captcha" class="w150 mr5 ml5" />
     <img src="{:captcha_src()}" alt="captcha" onclick="this.src=this.src+'?'" style="cursor:pointer"/> </br>
 <input id="submit" type="submit" value="提交" class="mt5 ml5 mb5" />
+    <p class='tip'></p>
 </form>
 </div>
 </div>
@@ -65,11 +66,13 @@
         }).done(
             function (data) {
                 console.log(data);
-                //window.location.href=data;
-                if(data.result=='success'){
-                    window.location.href = data.data;
+
+                if(data.result=='error'){
+                     $('p.tip').html(data.message);
+                    return false;
                 }
-                return false;
+
+                window.location.href = data.data;
 
             }, function (data) {
                 console.log(data);

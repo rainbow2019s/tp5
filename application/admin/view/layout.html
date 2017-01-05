@@ -1,38 +1,94 @@
-<!DOCTYPE html>
-<html lang="zh-cn">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap 101 Template</title>
+<!doctype html>
+<html lang="zh-CN">
 
-    <!-- Bootstrap -->
-    <link href="__COMMON__/bootstrap-3.3.0/css/bootstrap.min.css" rel="stylesheet">
+<head>
+  <meta charset="UTF-8">
+  <title>ecopro 后台配置主页</title>
+  <style type="text/css">
+    #header,#content,#foot{
+        width: 1190px; margin:0 auto; 
+    }
+    .block{
+            display: block;
+    }
+    .pr{position: relative;}
+    .w250{width:250px;}
+    .mt5{margin-top: 5px;}
+    .mb5{margin-bottom: 5px;}
+    .w150{width: 150px;}
+    .mr5{margin-right: 5px;}
+    .ml5{margin-left: 5px;}
+    .cp{cursor: pointer;}
+    li{list-style: none;cursor: pointer;line-height: 30px;}
+  </style>
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <h1>你好，世界！</h1>
-    <p>-----------模板开始---------------</p>
-    {__CONTENT__}
-    <p>-----------模板结束---------------</p>
-    <button type="button" class="btn btn-success">Success</button>
-    <?php echo url('/')?>
-    <br/>
-    <p>ROOT:__ROOT__</p>
-    <br/>
-    <span>aaaa</span>
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="http://cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="__COMMON__/bootstrap-3.3.0/js/bootstrap.min.js"></script>
-    <script type="text/javascript">
-        var domain=__ROOT__;
-    </script>
-  </body>
+<script src="__COMMON__/vue-1.0.26/vue.js"></script>
+<script src="__COMMON__/vue-router-0.7.13/vue-router.js"></script>
+<script src="__COMMON__/vue-resource-1.0.3/vue-resource.js"></script>
+<script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+
+</head>
+
+<body id='app'>
+  <div id="header" class="pr" style=" background:#80bf57  no-repeat left center;height: 50px;">
+<div id="head_info" style="text-align: right;color: white;font-size: 12px;">
+  <p class="mr5">{$user->name}</p>
+<p class="mr5" style="cursor: pointer">
+<span id="modifyPa" class="ib cp"><a href='__ADMIN_CONTROL__/auth/reset'>修改密码</a></span>
+<span id="exit" class="ib ml5 cp">退出</span>
+</p>
+</div>
+</div>
+<div id="content" class="pr">
+  <div id="menu" style="height: 550px; float: left;width: 220px;background-color: yellow;">
+<h5>{$menu.name}</h5>
+<ul>
+  {volist name='menu.submenu' id='vo'}
+  <li><a href="{$vo.url}">{$vo.name}</a></li>
+  {/volist}
+</ul>
+</div>
+<div id="main" class="ml5" style="float: left;overflow: hidden; width: 965px;"> {__CONTENT__}
+</div>
+</div>
+</div>
+<div id="foot" style="clear: both; text-align: center;background:#80bf57  no-repeat left center;">
+<p class="white">
+  ©2014-{:date('Y')} 宜葆农科&nbsp;&nbsp;&nbsp;&nbsp;浙ICP备15009724号
+</p>
+</div>
+
+
+
+<script type="text/javascript">
+  $('#exit').click(function () {
+   $.ajax({
+            url: '__ADMIN_CONTROL__/auth/ajaxlogout',
+            type: 'post',
+            data: { },
+            //dataType:'json'
+        }).done(
+            function (data) {
+                console.log(data);
+
+                if(data.result=='error'){
+                    //  $('p.tip').html(data.message);
+                    return false;
+                }
+
+                window.location.href = data.data;
+
+            }, function (data) {
+                console.log(data);
+                return false;
+            }
+            );
+
+        return false;
+
+
+  });
+</script>
+</body>
+
 </html>

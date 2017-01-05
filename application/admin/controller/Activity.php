@@ -5,8 +5,11 @@ use think\Controller;
 use think\Db;
 use think\Log;
 use think\View;
+use think\Session;
 
 use stdClass;
+use ecopro\SubMenu;
+
 use app\admin\model\Activity as ActivityModel;
 
 /**
@@ -29,6 +32,25 @@ class Activity extends Controller
         $this->_activity=$activityModel;
 
     }
+
+    public function index()
+    {
+        $user=Session::get('user');
+        $this->assign('user',$user);
+        $this->assign('menu',SubMenu::getMenu('platform'));
+
+        return view();
+    }
+
+    public function bind()
+    {
+        $user=Session::get('user');
+        $this->assign('user',$user);
+        $this->assign('menu',SubMenu::getMenu('platform'));
+
+        return view();
+    }
+
 
 
     // 获取所有有效的应用
@@ -77,12 +99,6 @@ class Activity extends Controller
 
 
 
-    public function index()
-    {
-        return $this->success("操作成功","dbTest");
-
-        //return "Hello ThinkPHP";
-    }
 
     public function baidu()
     {

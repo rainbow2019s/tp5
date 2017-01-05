@@ -10,7 +10,7 @@ use think\View;
 use stdClass;
 use think\Session;
 use app\admin\model\User as UserModel;
-
+use ecopro\SubMenu;
 
 class Auth extends Controller
 {
@@ -41,17 +41,14 @@ class Auth extends Controller
         if(empty($exist)){
             $this->redirect('auth/login');           
         }
-        
-        $user=Session::get('user');
-        $this->assign('user',json_encode($user));
-        return view();
+
+        $this->redirect('user/index');
+
     }
 
     // 后台登录
     public function login()
     {
-        //Session::flash('code','1234');
-        //$this->assign('code','1234');
         return view();
     }
 
@@ -60,19 +57,14 @@ class Auth extends Controller
     
     public function ajaxlogin()
     {
-         //$code=Session::pull('code');
-
          $params=input('params');
          $userForm=json_decode($params);
 
-        //$captcha=input('captcha');
         if(!captcha_check($userForm->captcha)){
-            //$this->redirect('auth/login');
             return Json(['result'=>'error','message'=>'验证码不正确','data'=>'']);
         }
 
         $superAdmin=$this->_user->getSuperAdmin();
-        //dump($superAdmin);
 
         if($superAdmin['phone']!=$userForm->username && $superAdmin['email']!=$userForm->username){
               return Json(['result'=>'error','message'=>'用户名不正确','data'=>'']);
@@ -90,21 +82,49 @@ class Auth extends Controller
         $user->email=$superAdmin['email'];
         $user->password=$userForm->password;
         Session::set('user',$user);
-        //dump($captcha);
 
         return Json(['result'=>'success','message'=>'','data'=>URL('index')]);
     }
 
-
-    // 测试用途
-    public function test()
+    public function ajaxlogout()
     {
-        //$admin=$this->_user->getSuperAdmin();
-        //dump($admin);
+        Session::clear();
+        Session::destroy();
 
-        $admin=new stdClass;
-        $admin->phone='18015826672';
-
-        dump($this->_user->getAdmin($admin));
+        return Json(['result'=>'success','message'=>'','data'=>URL('auth/index')]);
     }
+
+
+    public function reset()
+    {
+        $user=Session::get('user');
+        $this->assign('user',$user);
+        $this->assign('menu',SubMenu::getMenu('platform'));
+
+        return view();
+    }
+
+    public function resetSubmit()
+    {
+        
+        $password=input('password1');
+
+        $user=Session::get('user');
+        $user->token=uniqid();
+        $user->password=md5($password.$user->token);
+
+        $rows=$this->_user->resetSubmit($user);
+        // 大于0表示成功
+        if($rows>0){
+            Session::clear();
+            Session::destroy();
+
+            $this->redirect('admin/auth/index');
+        }
+
+        // TODO: 不成功处理
+        $this->redirect('auth/reset');
+
+    }
+
 }

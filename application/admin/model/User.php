@@ -97,6 +97,13 @@ class User extends Model
 
     }
 
+    // 口令重置
+    public function resetSubmit($user)
+    {
+        return Db::execute('update ep_admin_users set password=:password,token=:token,timestamp=now() where id=:id',
+            ['password'=>$user->password,'token'=>$user->token,'id'=>$user->id]);
+    }
+
     // 删除一个管理员
     // 假删除进回收站
     public function remove($id)
@@ -118,11 +125,13 @@ class User extends Model
     // 普通管理员绑定功能列表
     public function adminBindActivities($adminId)
     {
-        return Db::query(
+        $rows=Db::query(
             'select a.id as activity_id,a.name
 	            from ep_activities a 
 		            inner join ep_admin_app aa on a.id=aa.ep_activities_id 
                         and aa.ep_admin_users_id=?',[$adminId]);
+                        
+        return reset($rows);
     }
 
     // 普通管理员绑定应用功能
