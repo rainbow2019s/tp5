@@ -1,3 +1,287 @@
-{layout name='layout'/}
+{layout name='layout'/} 应用管理
+<div id='app'>
+    <section>
+        <router-view></router-view>
+    </section>
+</div>
 
-功能管理
+
+<script id="activity_template" type="text/v-template"> 
+    <a v-link="{name:'activityAdd'}" class="cp">新增</a> 
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <td style="width:20%">名称</td>
+                    <td style="width:20%">URL</td>
+                    <td style="width:15%">别名</td>
+                    <td style="width:15%">域名</td>
+                    <td style="width:15%">地址</td>
+                    <td style="width:15%">操作</td>
+                 </tr>
+            </thead>
+        <tbody>
+            <tr v-for="activity in activitylist">
+                <td>{{activity.name}}</td>
+                <td>{{activity.entrance_url}}</td>
+                <td>{{activity.entrance_alias}}</td>
+                <td>{{activity.domain}}</td>
+                <td>{{activity.host_ip_address}}</td>
+                <td>
+                    <a class="cp" v-link="{name:'activityEdit',params: { id: activity.id }}">编辑</a>
+                    <a class="cp" @click="ajaxRemoveActivity(activity.id)" href="#">删除</a> 
+                </td>
+            </tr>
+        </tbody>
+    </table> 
+</script>
+
+
+<script id="activityAdd_template" type="text/v-template">
+    <div style="margin-left:200px;">
+        <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">名称:</label>
+            <input type="text" v-model='activity.name'/>
+            <label class="block mt5 mb5 ml5">URL:</label>
+            <input type="text" v-model='activity.entrance_url'/>
+            <label class="block mt5 mb5 ml5">别名：</label>
+            <input type="text" v-model='activity.entrance_alias'/>
+            <label class="block mt5 mb5 ml5">域名：</label>
+            <input type="text" v-model='activity.domain'/>
+            <label class="block mt5 mb5 ml5">地址：</label>
+            <input type="text" v-model='activity.host_ip_address'/>
+            <br/>
+            <input type="submit" value="提交" /><br/>
+            
+            <p>{{message}}</p>
+
+        </form>
+    </div>
+</script>
+
+
+<script id="activityEdit_template" type="text/v-template">
+   <div style="margin-left:200px;">
+        <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">名称:</label>
+            <input type="text" v-model='activity.name'/>
+            <label class="block mt5 mb5 ml5">URL:</label>
+            <input type="text" v-model='activity.entrance_url'/>
+            <label class="block mt5 mb5 ml5">别名：</label>
+            <input type="text" v-model='activity.entrance_alias'/> 
+            <label class="block mt5 mb5 ml5">域名：</label>
+            <input type="text" v-model='activity.domain'/>
+            <label class="block mt5 mb5 ml5">地址：</label>
+            <input type="text" v-model='activity.host_ip_address'/><br/>
+            <input type="submit" value="提交" /><br/>
+            
+            <p>{{message}}</p>
+
+        </form>
+</script>
+
+
+<script type="text/javascript">
+    (function (Vue) {
+
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        var Activity = Vue.extend({
+            template: loadTemplate('activity'),
+            data: function () {
+
+                this.ajaxQueryAllActivities();
+
+                return { activitylist: [],message:'' };
+            },
+            methods: {
+
+                ajaxQueryAllActivities:function(){
+
+                    this.$http.get('__ADMIN_CONTROL__/activity/ajaxQueryAllActivities').then((response) => {
+                        this.activitylist = response.data;
+                    });
+                },  
+
+                //删除应用
+                ajaxRemoveActivity: function (id) {
+                    if (confirm("你确定要删除吗？")) {
+                        this.$http.post('__ADMIN_CONTROL__/activity/ajaxRemoveActivity', { params: JSON.stringify({id }) }).then((response) => {
+                            this.message = response.data.msg;            
+                            this.ajaxQueryAllActivities();
+                        });
+                    }
+                }
+            }
+        })
+
+        var ActivityAdd = Vue.extend({
+
+            template: loadTemplate('activityAdd'),
+            data: function () {
+                return { 
+                    activity: { name: '', domain: '', host_ip_address: '', entrance_url: '', entrance_alias: '' }, 
+                    message: '' 
+                }
+            },
+            methods: {
+                submit: function (event) {
+
+                        var vm = this;
+
+                        if (vm.activity.name == '') {
+                            vm.message = '名字不能为空';
+                            return;
+                        }
+
+                        if (vm.activity.entrance_url == '') {
+                            vm.message = 'URL不能为空！';
+                            return;
+                        }
+                        if (vm.activity.entrance_alias == '') {
+                            vm.message = '别名不能为空！';
+                            return;
+                        }
+                        if (vm.activity.domain == '') {
+                            vm.message = '域名不能为空！';
+                            return;
+                        }
+                        if (vm.activity.host_ip_address == '') {
+                            vm.message = '地址不能为空！';
+                            return;
+                        }
+                        if (!/[\u4e00-\u9fa5]+$/.test(vm.activity.name)) {
+                            vm.message = '请输入中文字符';
+                            return;
+                        }
+                        if (!/[a-zA-Z]+$/.test(vm.activity.entrance_alias)) {
+                            vm.message = '请输入英文字符';
+                            return;
+                        }
+                        if (!/^http:\/\//.test(vm.activity.entrance_url)) {
+                            vm.message = '网址输入不正确';
+                            return;
+                        }
+                    if (confirm("你确定要新增模块吗？")) {
+                        vm.message = '';
+                        vm.$http.post('__ADMIN_CONTROL__/activity/ajaxActivityAdd', { params: JSON.stringify(vm.activity) })
+                            .then((response) => {
+                                //console.log(response.data);
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                router.go('/activity');
+
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+        var ActivityEdit = Vue.extend({
+            template: loadTemplate('activityEdit'),
+            data: function () {
+                return { 
+                    activity: {id:'', name: '', domain: '', host_ip_address: '', entrance_url: '', entrance_alias: '' }, 
+                    message: '' 
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.activity.id = transition.to.params.id;
+                    //console.info(transition.to.params.id);
+                    vm.$http.post('__ADMIN_CONTROL__/activity/ajaxQueryActivity', { params: JSON.stringify(vm.activity) }).then((response) => {
+                        vm.activity = response.data.data;
+                    });
+                }
+            },
+            methods: {
+                submit: function (event) {
+                        var vm=this;
+                        if (vm.activity.name == '') {
+                            vm.message = '名字不能为空';
+                            return;
+                        }
+
+                        if (vm.activity.entrance_url == '') {
+                            vm.message = 'URL不能为空！';
+                            return;
+                        }
+                        if (vm.activity.entrance_alias == '') {
+                            vm.message = '别名不能为空！';
+                            return;
+                        }
+                        if (vm.activity.domain == '') {
+                            vm.message = '域名不能为空！';
+                            return;
+                        }
+                        if (vm.activity.host_ip_address == '') {
+                            vm.message = '地址不能为空！';
+                            return;
+                        }
+                        if (!/[\u4e00-\u9fa5]+$/.test(vm.activity.name)) {
+                            vm.message = '请输入中文字符';
+                            return;
+                        }
+                        if (!/[a-zA-Z]+$/.test(vm.activity.entrance_alias)) {
+                            vm.message = '请输入英文字符';
+                            return;
+                        }
+                        if (!/^http:\/\//.test(vm.activity.entrance_url)) {
+                            vm.message = '网址输入不正确';
+                            return;
+                        }
+
+                    if (confirm("你确定要编辑用户吗？")) {
+                        vm.message = '';
+                        vm.$http.post('__ADMIN_CONTROL__/activity/ajaxEditActivity',
+                            { params: JSON.stringify(vm.activity) })
+                            .then((response) => {
+                                console.log(response.data);
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                router.go('/activity');
+
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+
+        var App = Vue.extend({})
+
+        var router = new VueRouter()
+
+        router.map({
+
+            '/activity': {
+                name: 'activity',
+                component: Activity
+            },
+            '/activityAdd': {
+                name: 'activityAdd',
+                component: ActivityAdd
+            },
+            '/activityEdit/:id': {
+                name: 'activityEdit',
+                component: ActivityEdit
+            },
+            '*': {
+                name: 'activity',
+                component: Activity
+            }
+        })
+
+        router.start(App, '#app')
+    })(Vue)
+</script>

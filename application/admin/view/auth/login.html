@@ -18,71 +18,75 @@
     .mr5{margin-right: 5px;}
     .ml5{margin-left: 5px;}
   </style>
+<script src="__COMMON__/vue-1.0.26/vue.js"></script>
+<script src="__COMMON__/vue-router-0.7.13/vue-router.js"></script>
+<script src="__COMMON__/vue-resource-1.0.3/vue-resource.js"></script>
 </head>
 
 <body>
-    <div id="login">
-        <div style="left:600px; top:100px;position: absolute;width:300px; border: 1px solid #000;">
-<form>
+    <div id='app' style="left:600px; top:100px;position: absolute;width:300px; border: 1px solid #000;">
+<form @submit.prevent="submit">
     <label class="block mt5 mb5 ml5">用户帐号:</label>
-    <input type="text" id="username" name="username" class="w250 ml5" />
+    <input type="text" v-model='user.username' class="w250 ml5" />
     <label class="block mt5 mb5 ml5">用户密码:</label>
-    <input type="password" id="password" name="password" class="w250 ml5" />
+    <input type="password" v-model='user.password' class="w250 ml5" />
     <label class="block mt5 mb5 ml5">验证码：</label>
-    <input type="text" id="captcha" name="captcha" class="w150 mr5 ml5" />
+    <input type="text" v-model='user.captcha' class="w150 ml5" />
     <img src="{:captcha_src()}" alt="captcha" onclick="this.src=this.src+'?'" style="cursor:pointer"/> </br>
-<input id="submit" type="submit" value="提交" class="mt5 ml5 mb5" />
-    <p class='tip'></p>
+<input type="submit" value="提交" class="mt5 ml5 mb5" />
+<a href="#">密码重置</a>
+
+<p>{{message}}</p>
+
 </form>
 </div>
-</div>
-<script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
 
-<script type="text/javascript">
-    $('#submit').click(function () {
-        var username = $('#username').val();
-        var password = $('#password').val();
-        var captcha = $('#captcha').val();
-        if (username == '') {
-            alert("用户账户不能为空！");
-            return false;
-        }
+<script type="text/javascript"> 
+    new Vue({
+        el: '#app',
+        data: {
+            user: { username: '', password: '', captcha: '' },
+            message: ''
+        },
+        methods: {
+            submit: function (event) {
 
-        if (password == '') {
-            alert("密码不能为空！");
-            return false;
-        }
+                var vm = this;
 
-        if (captcha == '') {
-            alert("验证码：不能为空！");
-            return false;
-        }
-
-        $.ajax({
-            url: '__ADMIN_CONTROL__/auth/ajaxlogin',
-            type: 'post',
-            data: { params: JSON.stringify({ username: username, password: password, captcha: captcha }) },
-            //dataType:'json'
-        }).done(
-            function (data) {
-                console.log(data);
-
-                if(data.result=='error'){
-                     $('p.tip').html(data.message);
-                    return false;
+                if (vm.user.username == '') {
+                    vm.message = '用户账户不能为空';
+                    return;
                 }
 
-                window.location.href = data.data;
+                if (vm.user.password == '') {
+                    vm.message = '密码不能为空！';
+                    return;
+                }
 
-            }, function (data) {
-                console.log(data);
-                return false;
+                if (vm.user.captcha == '') {
+                    vm.message = '验证码不能为空！';
+                    return;
+                }
+
+                vm.message = '';
+
+                vm.$http.post('__ADMIN_CONTROL__/auth/ajaxlogin',
+                    { params: JSON.stringify(vm.user) })
+                    .then((response) => {
+                        //console.log(response.data);
+                        if (response.data.result == 'error') {
+                             vm.message = response.data.msg;
+                             return;
+                        }
+                        window.location.href = response.data.data;
+
+                    });
+
+                return;
             }
-            );
+        }
+    })
 
-        return false;
-
-    });
 </script>
 </body>
 

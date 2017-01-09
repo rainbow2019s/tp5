@@ -1,3 +1,323 @@
 {layout name='layout'/}
+<!--模块管理员-->
+<div id='app'>
+    <section>
+        <router-view></router-view>
+    </section>
+</div>
 
-模块管理员
+{// 用户列表模板}
+<script id="user_template" type="text/v-template">
+    <a v-link="{name:'userAdd'}" class="cp">新增</a> {{message}}
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <td style="width:20%">序号</td>
+                    <td style="width:20%">姓名</td>
+                    <td style="width:20%">手机号</td>
+                    <td style="width:20%">邮箱</td>
+                    <td style="width:20%">操作</td>
+                 </tr>
+            </thead>
+        <tbody>
+            <tr v-for="user in userlist">
+                <td>{{user.rowid}}</td>
+                <td>{{user.name}}</td>
+                <td>{{user.phone}}</td>
+                <td>{{user.email}}</td>
+                <td>
+                    <a class="cp" v-link="{name:'userEdit',params: { id: user.id }}">编辑</a>
+                    <a class="cp"v-if="user.is_super==0" @click="ajaxUserRemove(user.id)" href="#">删除</a>
+                    <a class="color-lightgray" v-else="user.is_super=1">删除</a>
+                    <a class="cp" v-if="user.is_super==0" @click="ajaxUserRightsChange(user.id,1)" href="#">升级</a>
+                    <a class="cp" v-else="user.is_super==1" @click="ajaxUserRightsChange(user.id,0)" href="#">降级</a>
+                </td>
+            </tr>
+        </tbody>
+    </table> 
+</script>
+
+{// 用户新增模板}
+<script id="userAdd_template" type="text/v-template">
+    <div style="margin-left:200px;">
+        <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">用户名:</label>
+            <input type="text" v-model='user.name'/>
+            <label class="block mt5 mb5 ml5">手机号:</label>
+            <input type="text" v-model='user.phone'/>
+            <label class="block mt5 mb5 ml5">邮箱：</label>
+            <input type="text" v-model='user.email'/><br/>
+            <input type="submit" value="提交" />        
+            <p>{{message}}</p>
+
+        </form>
+    </div>
+</script>
+
+
+{// 用户编辑模板}
+<script id="userEdit_template" type="text/v-template">
+    <div style="margin-left:200px;">
+         <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">用户名:</label>
+            <input type="text" v-model='user.name'/>
+            <label class="block mt5 mb5 ml5">手机号:</label>
+            <input type="text" v-model='user.phone'/>
+            <label class="block mt5 mb5 ml5">邮箱：</label>
+            <input type="text" v-model='user.email'/><br/>
+            <input type="submit" value="提交" /><br/>
+            
+            <p>{{message}}</p>
+
+        </form>
+    </div>
+</script>
+
+
+<script type="text/javascript">
+    (function (Vue) {
+
+        // 通用加载模板方法
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        // 用户列表模板
+        var User = Vue.extend({
+            template: loadTemplate('user'),
+            data: function () {
+                this.ajaxQueryAllUsers();
+
+                return { userlist: [], message: '' };
+            },
+            methods: {
+                clear: function () {
+                    this.message = '';
+                },
+                // 查询有效用户列表
+                ajaxQueryAllUsers: function () {
+                    this.$http.get('__ADMIN_CONTROL__/user/ajaxQueryAllUsers').then((response) => {
+                        this.userlist = response.data;
+                    })
+                },
+
+                //删除用户  
+                ajaxUserRemove: function (id) {
+                    if (confirm("你确定要删除吗？")) {
+                        this.clear();
+                        this.$http.post('__ADMIN_CONTROL__/user/ajaxUserRemove', { params: JSON.stringify({ id: id }) }).then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            //再次请求刷新页面
+                            this.ajaxQueryAllUsers();
+                        });
+                    }
+                },
+
+                //升级为超级管理员或降级为普通管理员
+                ajaxUserRightsChange: function (id, is_super) {
+                    if (confirm("你确定要修改用户级别吗？")) {
+                        this.clear();
+                        this.$http.post('__ADMIN_CONTROL__/user/ajaxUserRightsChange',
+                            { params: JSON.stringify({ id, is_super }) }).then((response) => {
+                                this.message = response.data.msg;
+                                this.ajaxQueryAllUsers();
+                            });
+                    }
+                }
+            }
+        })
+
+        // 用户新增模板
+        var UserAdd = Vue.extend({
+            template: loadTemplate('userAdd'),
+            data: function () {
+                return {
+                    user: { name: '', phone: '', email: '' },
+                    message: ''
+                }
+            },
+            methods: {
+                submit: function (event) {
+                    var vm = this;
+
+                    if (vm.user.name == '') {
+                        vm.message = '用户账户不能为空';
+                        return;
+                    }
+
+                    if (vm.user.phone == '') {
+                        vm.message = '手机号不能为空！';
+                        return;
+                    }
+
+                    if (vm.user.email == '') {
+                        vm.message = '邮箱不能为空！';
+                        return;
+                    }
+
+                    if (!/^(13[0-9]{9})|(14[0-9]{9})|(18[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})$/.test(vm.user.phone)) {
+                        vm.message = '电话格式不正确';
+                        return;
+                    }
+
+                    if (!/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(vm.user.email)) {
+                        vm.message = '邮箱格式不正确';
+                        return;
+                    }
+
+
+                    if (confirm("你确定要新增用户吗？")) {
+
+                        vm.message = '';
+
+                        vm.$http.post('__ADMIN_CONTROL__/user/ajaxAddUser',
+                            { params: JSON.stringify(vm.user) })
+                            .then((response) => {
+                                //console.log(response.data);
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                router.go('/user');
+
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+
+
+        var UserEdit = Vue.extend({
+            template: loadTemplate('userEdit'),
+            data: function () {
+                return {
+                    user: { id: '', name: '', phone: '', email: '' },
+                    message: ''
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.user.id = transition.to.params.id;
+                    vm.$http.post('__ADMIN_CONTROL__/user/ajaxQueryUser', { params: JSON.stringify(vm.user) }).then((response) => {
+                        vm.user = response.data.data;
+                    });
+                }
+            },
+            methods: {
+
+                submit: function (event) {
+                    var vm = this;
+
+                    if (vm.user.name == '') {
+                        vm.message = '用户账户不能为空';
+                        return;
+                    }
+
+                    if (vm.user.phone == '') {
+                        vm.message = '手机号不能为空！';
+                        return;
+                    }
+
+                    if (vm.user.email == '') {
+                        vm.message = '邮箱不能为空！';
+                        return;
+                    }
+
+                    if (!/^(13[0-9]{9})|(14[0-9]{9})|(18[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})$/.test(vm.user.phone)) {
+                        vm.message = '电话格式不正确';
+                        return;
+                    }
+
+                    if (!/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(vm.user.email)) {
+                        vm.message = '邮箱格式不正确';
+                        return;
+                    }
+
+                    if (confirm("你确定要修改用户吗？")) {
+                        vm.message = '';
+
+                        vm.$http.post('__ADMIN_CONTROL__/user/ajaxEditUser',
+                            { params: JSON.stringify(vm.user) })
+                            .then((response) => {
+                                //console.log(response.data);
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                router.go('/user');
+
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+
+        var App = Vue.extend({})
+
+        var router = new VueRouter()
+
+        router.map({
+
+            '/user': {
+                name: 'user',
+                component: User
+            },
+            '/userAdd': {
+                name: 'userAdd',
+                component: UserAdd
+            },
+            '/userEdit/:id': {
+                name: 'userEdit',
+                component: UserEdit
+            },
+
+            '*': {
+                name: 'user',
+                component: User
+            }
+        })
+
+        router.start(App, '#app')
+    })(Vue)
+
+
+
+</script>
+
+
+<script type="text/javascript"> 
+    $('#user_edit_submit').click(function () {
+        var name = $('#name').val();
+        var phone = $('#phone').val();
+        var email = $('#email').val();
+
+        if (name == '') {
+            alert("用户账户不能为空！");
+            return false;
+        } if (phone == '') {
+            alert("手机号不能为空！");
+            return false;
+        } if (email == '') {
+            alert("邮箱不能为空！");
+            return false;
+        }
+        if (/^(13[0-9]{9})|(14[0-9]{9})|(18[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})$/.test(phone) == false) {
+            alert("手机号格式不正确！");
+            return false;
+        }
+        if (/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(email) == false) {
+            alert("邮箱格式不正确！");
+            return false;
+        }
+    });
+</script>

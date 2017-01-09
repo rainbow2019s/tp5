@@ -1,0 +1,87 @@
+{layout name='layout'/}
+
+<div id="app">
+    <table style="width:100%">
+<thead>
+    <tr>
+        <td style="width:15%">序号</td>
+<td style="width:15%">名称</td>
+<td style="width:45%">模块</td>
+<td style="width:25%">操作</td>
+</tr>
+</thead>
+<tbody>
+    <tr v-for="item in bindlist">
+        <td>{{item.id}}</td>
+        <td>{{item.name}}</td>
+        <td>
+            <label v-for="state in item.checklist">
+                <input type="checkbox" v-model="state.checked" />{{state.name}}
+            </label>
+
+        </td>
+        <td><button @click="bind(item)">绑定</button>{{item.message}}</td>
+    </tr>
+</tbody>
+</table>
+</div>
+<script type="text/javascript"> 
+    new Vue({
+        el: '#app',
+        data: function () {
+            this.ajaxAdminAllActivities();
+            return { bindlist: [] ,message:{}}
+        },
+        methods: {
+            ajaxAdminAllActivities: function () {
+                this.$http.get('__ADMIN_CONTROL__/user/ajaxAdminAllActivities').then((response) => {
+                    // 将整数1转成true
+                    for (var item of response.data.data) {
+                        for (var state of item.checklist) {
+                            state.checked = state.checked == 1 ? true : false;
+                            state.origin = state.origin == 1 ? true : false;
+                        }
+
+                        item.message='';
+                        if(item.id==this.message.id){
+                            item.message=this.message.text;
+                        }
+                        
+                    }
+
+                    this.bindlist = response.data.data;
+                })
+            },
+            bind: function (item) {
+
+                var binding = [];
+                var unbinding = [];
+                // 将操作拆分成2个数组（新增和删除）
+                for (var state of item.checklist) {
+                    if (state.checked != state.origin) {
+                        var value = { id: item.id, activity_id: state.activity_id };
+                        var rights = state.checked?binding:unbinding;
+                        rights.push(value);
+                    }
+                }
+
+                var vm = this;
+                
+                if(binding.length==0 && unbinding.length==0){
+                    return;
+                }
+
+                vm.$http.post('__ADMIN_CONTROL__/user/ajaxAdminBinding',
+                    { params: JSON.stringify({ binding, unbinding }) }).then((response) => {
+
+                        if(response.data.result=='success'){
+                            vm.message={id:item.id,text:response.data.msg};
+                        }
+                        vm.ajaxAdminAllActivities();
+                    });
+
+            }
+        }
+    })
+
+</script>

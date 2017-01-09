@@ -1,35 +1,50 @@
 {layout name='layout' /}
 
-<div style="margin-left:200px;">
-<form id="modifyPassword_form" method="post" action="__ADMIN_CONTROL__/auth/resetSubmit">
+<div style="margin-left:200px;" id='app'>
+<form id="resetForm" method="post" action="__ADMIN_CONTROL__/auth/resetSubmit" @submit.prevent="submit">
     <label class="block mt5 mb5 ml5">新密码:</label>
-    <input type="password" id="password1" name="password1" />
+    <input type="password" name="password1" v-model="password1" />
     <label class="block mt5 mb5 ml5">确认密码：</label>
-    <input type="password" id="password2" name="password2" /></br>
-    <input id="modifyPassword_submit" type="submit" value="提交" class="mt5" />
-    <p class='tip'></p>
+    <input type="password" name="password2" v-model="password2" /></br>
+    <input type="submit" value="提交" class="mt5" />
+    
+    <p>{{message}}</p>
 </form>
 </div>
 
 <script type="text/javascript">
-    $('#modifyPassword_submit').click(function () {
-        var password1 = $('#password1').val();
-        var password2 = $('#password2').val();
-        if (password1 == '') {
-            $('p.tip').html("新密码不能为空！");
-            return false;
-        } if (password2 == '') {
-            $('p.tip').html("确认密码不能为空！");
-            return false;
-        }
-        if (password1 != password2) {
-            $('p.tip').html("新密码和确认密码不同请重新输入！");
-            return false;
-        }
-        if (password1.length < 6 || password1.length > 20) {
-            $('p.tip').html("新密码长度不能小于6位或者大于20位！");
-            return false;
-        }
 
-    });
+ new Vue({
+        el: '#app',
+        data: {
+            password1:'',
+            password2:'',
+            message:''
+        },
+        methods:{
+            submit:function(event){
+                var vm=this;
+                if(vm.password1==''){
+                    vm.message='新密码不能为空';
+                    return;
+                }
+
+                if(vm.password2==''){
+                    vm.message='确认密码不能为空';
+                    return;
+                }
+
+                if(vm.password1!=vm.password2){
+                    vm.message='两次密码输入不匹配';
+                    return;
+                }
+
+                if(!confirm('真的确认修改密码吗?')){
+                    return;
+                }
+                document.getElementById('resetForm').submit();
+            }
+        }
+ });
+
 </script>

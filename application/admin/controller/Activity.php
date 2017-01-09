@@ -2,14 +2,14 @@
 namespace app\admin\controller;
 
 use think\Controller;
-use think\Db;
-use think\Log;
+//use think\Db;
+//use think\Log;
 use think\View;
 use think\Session;
 
-use stdClass;
-use ecopro\SubMenu;
 
+use ecopro\SubMenu;
+use ecopro\AjaxOutput;
 use app\admin\model\Activity as ActivityModel;
 
 /**
@@ -17,8 +17,6 @@ use app\admin\model\Activity as ActivityModel;
  * 用于功能的增删改查
  * 
  */
-
-
 
 class Activity extends Controller
 {
@@ -51,130 +49,79 @@ class Activity extends Controller
         return view();
     }
 
-
+    //---------------------------------------------------------------------
 
     // 获取所有有效的应用
-    public function getAllEnabled()
+    public function ajaxQueryAllActivities()
     {
-        return Json($this->_activity->getAllEnabled());
-    }
-
-    // 获取所有无效的应用
-    public function getAllDisabled()
-    {
-        return Json($this->_activity->getAllDisabled());
-    }
-
-    // 获取所有应用（有效和无效）
-    public function getAll()
-    {
-        return Json($this->_activity->getAll());     
-    }
-
-    // 注册应用
-    public function add($params='')
-    {
-        //TODO: 调试时打开
-        //$activity=json_decode($params);
-        $activity = new stdClass;
-        $activity->name='知识库3';
-        $activity->domain='';
-        $activity->host_ip_address='127.0.0.1';
-        $activity->entrance_url='/tech3index';
-        $activity->entrance_alias='知识问答3';
-
-
-        $rows=$this->_activity->add($activity);
-        return Json($rows);
-
-    }
-
-    // 移除一个小应用
-    public function remove($id)
-    {
-        $rows=$this->_activity->remove($id);
-
+        return Json($this->_activity->ajaxQueryAllActivities());
     }
 
 
-
-
-
-    public function baidu()
+    /**
+     * 注册应用
+     * $activity=json_decode($params);
+     * $activity = new stdClass;
+     * $activity->name='知识库3';
+     * $activity->domain='';
+     * $activity->host_ip_address='127.0.0.1';
+     * $activity->entrance_url='/tech3index';
+     * $activity->entrance_alias='知识问答3';
+     *
+     */
+    public function ajaxActivityAdd()
     {
-        $this->assign('name','');
-        $data=new \stdClass;
-        $data->id=123;
-        $data->name='张三';
-        $this->assign('user',$data);    
+        $params= input('params');
+        $activity=json_decode($params);
 
-        return view();
-    }    
+        $rows=$this->_activity->ajaxActivityAdd($activity);
 
+        return $rows>0?Json(AjaxOutput::success('新增应用成功')):Json(AjaxOutput::error('新增应用失败')); 
 
-    public function hello($name='123')
-    {
-
-        $this->assign('name', $name);
-        return $this->fetch();
     }
 
-    public function dbTest()
+    /**
+     * 返回单个Activity应用记录
+     *
+     */
+    public function ajaxQueryActivity()
     {
+        $params=input('params');
+        $activity=json_decode($params);
 
-        //$result = Db::query('select id,code,nums from scg_factory where nums>:nums', ['nums' => 0]);
+        $activity=$this->_activity->ajaxQueryActivity($activity);
 
-        //$this->assign('name', 'TP');
-        //return $this->fetch('index/dbtest', ['name' => 'TP']);
-        //
-        //Log::write('读取数据库成功');
-        //Log::write(json_encode($result));
-
-        $user=model("admin/index/User");
-
-        $view = new View();
-        return $view->fetch('index/dbtest', ['name' => 'TP2', 'result' => $user->getFactory()]);
+        return isset($activity)?Json(AjaxOutput::success('操作成功',$activity)):
+            Json(AjaxOutput::error('记录不存在'));
     }
 
-
-    public function dbTest2()
+    /**
+     * 更新一个功能应用
+     *
+     */
+    public function ajaxEditActivity()
     {
-        $factory=Db::name('scg_factory')->find();
-        var_dump($factory);
+        $params=input('params');
+        $activity=json_decode($params);
+
+        $rows=$this->_activity->ajaxEditActivity($activity);
+
+        return $rows>0?Json(AjaxOutput::success('应用更新成功')):Json(AjaxOutput::error('应用更新失败'));  
     }
 
-    public function phpview()
+    /**
+     * 移除一个小应用
+     *
+     */
+    public function ajaxRemoveActivity()
     {
-        $view = new View();
+        $params=input('params');
+        $activity=json_decode($params);
 
-        //$view_path=APP_PATH.DS.'admin'
-        return $view->engine('php')->fetch();
-    }
+        $status=$this->_activity->ajaxRemoveActivity($activity);
 
-    public function arrayTest()
-    {
-        $arr = ['a' => 1, 14, 'b' => 7, 8];
-        asort($arr);
-        print_r($arr);
-        var_dump($arr);
-        #array(4) { ["a"]=> int(1) ["b"]=> int(7) [1]=> int(8) [0]=> int(14) }
-        ksort($arr);
-        print_r($arr);
-        #Array ( [a] => 1 [b] => 7 [0] => 14 [1] => 8 )
-    }
+        return $status?Json(AjaxOutput::success('应用删除成功')):Json(AjaxOutput::error('应用删除失败'));  
 
-    public function classTest()
-    {
-        $admin = new \admin\Test();
-        $admin->show();
-
-        //$user = model('User');
-        //echo $user->getId();
-
-        //$user = Loader::model('User');
-        //echo $user->getId();
-        //$user = new \app\admin\model\User;
-        //echo $user->getId();
     }
 
 }

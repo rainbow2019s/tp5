@@ -20,22 +20,24 @@
     .ml5{margin-left: 5px;}
     .cp{cursor: pointer;}
     li{list-style: none;cursor: pointer;line-height: 30px;}
+    .color-lightgray{color:lightgray}
   </style>
 
 <script src="__COMMON__/vue-1.0.26/vue.js"></script>
 <script src="__COMMON__/vue-router-0.7.13/vue-router.js"></script>
 <script src="__COMMON__/vue-resource-1.0.3/vue-resource.js"></script>
-<script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+<!--<script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>-->
 
 </head>
 
 <body id='app'>
   <div id="header" class="pr" style=" background:#80bf57  no-repeat left center;height: 50px;">
 <div id="head_info" style="text-align: right;color: white;font-size: 12px;">
-  <p class="mr5">{$user->name}</p>
+<p class="mr5">{$user->name}</p>
 <p class="mr5" style="cursor: pointer">
 <span id="modifyPa" class="ib cp"><a href='__ADMIN_CONTROL__/auth/reset'>修改密码</a></span>
-<span id="exit" class="ib ml5 cp">退出</span>
+<!--<span id="exit" class="ib ml5 cp">退出</span>-->
+<a href='__ADMIN_CONTROL__/auth/logout'>退出</a>
 </p>
 </div>
 </div>
@@ -58,37 +60,6 @@
 </p>
 </div>
 
-
-
-<script type="text/javascript">
-  $('#exit').click(function () {
-   $.ajax({
-            url: '__ADMIN_CONTROL__/auth/ajaxlogout',
-            type: 'post',
-            data: { },
-            //dataType:'json'
-        }).done(
-            function (data) {
-                console.log(data);
-
-                if(data.result=='error'){
-                    //  $('p.tip').html(data.message);
-                    return false;
-                }
-
-                window.location.href = data.data;
-
-            }, function (data) {
-                console.log(data);
-                return false;
-            }
-            );
-
-        return false;
-
-
-  });
-</script>
 </body>
 
 </html>
