@@ -1,0 +1,150 @@
+{layout name='layout' /}
+
+<div id='app'>
+
+    <button v-on:click="add">添加节点</button>
+    <button v-on:click="insert">插入节点</button>
+    <button v-on:click="del">删除节点</button>
+    <button v-on:click="convert">遍历所有节点</button>
+    <button v-on:click="remove1">剪枝1</button>
+    <button v-on:click="remove2">剪枝2</button>
+    <button v-on:click="remove3">剪枝3</button>
+
+
+</div>
+<script type="text/javascript">
+    new Vue({
+        el: '#app',
+        data: {
+            treelist: [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }],
+            tree: {
+                id: 0,
+                name: "农作物",
+                parent_id: 0,
+                depth: 0,
+                children: []
+            },
+            id: 0,
+
+            message: ''
+        },
+        methods: {
+            // 查找指定id的结点
+            find: function (children, id) {
+
+                if (id == 0) {
+                    return this.tree;
+                }
+
+
+                for (var element of children) {
+                    console.log(element.id + ':' + element.name);
+                    if (element.id == id) {
+                        return element;
+                    }
+
+                    if (element.children.length > 0) {
+                        return this.find(element.children, id);
+                    }
+
+
+                }
+                
+
+            },
+            // 遍历树型结点 转换为一维数组
+            traverse:function(children){
+
+               for (var element of children) {
+                   this.treelist.push({id:element.id,name:element.name,parent_id:element.parent_id,depth:element.depth});
+
+                    if (element.children.length > 0) {
+                        this.traverse(element.children);
+                    }
+                }
+            },
+
+            add: function (event) {
+
+                var node = this.find(this.tree.children, 0);
+                node.children.push({ id: 1, name: '瓜果类', parent_id: node.id, depth: node.depth + 1, children: [] })
+                node.children.push({ id: 2, name: '蔬菜类', parent_id: node.id, depth: node.depth + 1, children: [] })
+
+
+            },
+            insert: function (event) {
+
+                var node = this.find(this.tree.children, 1);
+                node.children.push({ id: 3, name: '西瓜', parent_id: node.id, depth: node.depth + 1, children: [] })
+                node.children.push({ id: 4, name: '南瓜', parent_id: node.id, depth: node.depth + 1, children: [] })
+ 
+            },
+
+            del: function (event) {
+
+                var node = this.find(this.tree.children, 4);
+                //console.log(node.id);
+                node.children.push({ id: 5, name: '白病', parent_id: node.id, depth: node.depth + 1, children: [] })
+                node.children.push({ id: 6, name: '粉病', parent_id: node.id, depth: node.depth + 1, children: [] })
+                //console.log(this.tree);
+            },
+
+            convert:function(event){
+                this.treelist=[{ id: 0, name: '农作物', parent_id: 0, depth: 0 }];
+                this.traverse(this.tree.children);
+
+                //console.log(this.treelist);
+                console.log('以下就是输出的树型结构数组');
+                for(var node of this.treelist){
+                    console.log(node.id+':'+node.name+':'+node.depth);
+                }
+
+            },
+
+            // 通用剪枝算法
+            remove:function(id){
+
+                if(id==0){
+                    return 0; // 根结点不允许剪枝
+                }
+
+                var node=this.find(this.tree.children,id);
+                if(node.children.length>0){
+                    return -1; // 存在子节点
+                }
+
+                var parent=this.find(this.tree.children,node.parent_id);
+                var children=[];
+                for(var element of parent.children){
+                    if(element.id!=node.id){
+                        children.push(element);
+                    }
+                }
+
+                parent.children=children;
+
+            },
+
+            remove1:function(event){
+
+                console.log('剪枝1开始');
+                this.remove(6); //剪枝 节点6
+
+
+            },
+
+            remove2:function(event){
+
+            },
+            remove3:function(event){
+                if(typeof FileReader==='undefined'){
+                    console.log('error');
+                }else{
+                    console.log('success');
+                }
+
+            }
+        }
+    })
+
+</script>

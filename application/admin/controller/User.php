@@ -110,6 +110,8 @@ class User extends Controller
             return Json(AjaxOutput::error('邮箱已存在'));
         }
 
+        $rows=$this->_user->ajaxEditUser($admin);
+
         return $rows>0?Json(AjaxOutput::success('管理员帐号更新成功')):Json(AjaxOutput::error('管理员帐号更新失败'));
     }
 
@@ -179,31 +181,10 @@ class User extends Controller
         return Json(AjaxOutput::success('',$adminUsers));
     }
 
-    // // 获取所有有效的普通管理员
-    // public function getAllEnabledAdmin()
-    // {
-    //     return Json($this->_user->getAllEnabledAdmin());
-    // }
-
-    // public function adminBindAllActivities()
-    // {
-    //     $form=input('params');
-    //     $admin=json_decode($form);
-
-    //     return Json($this->_user->adminBindAllActivities($admin));
-    // }
-
-    // public function getAllAdminBindActivities()
-    // {
-    //     $users=$this->_user->getAllEnabledAdmin();
-    //     foreach($users as $user){
-    //         $admin=new stdClass;
-    //         $admin->id=$user['id'];
-    //         $user['checkListItem']=$this->_user->adminBindAllActivities($admin);
-    //     }
-
-    //     return Json($users);
-    // }
+    /**
+     * 普通管理员功能绑定
+     *
+     */
 
     public function ajaxAdminBinding()
     {

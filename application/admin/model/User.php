@@ -24,6 +24,16 @@ class User extends Model
     }
 
 
+    // 普通管理员登录
+    public function getAdmin($admin)
+    {
+        $rows=Db::query('select id,name,phone,email,password,token from ep_admin_users 
+            where is_enabled=1 and is_super=0 and (phone=:phone or email=:email)',
+            ['phone'=>$admin->username,'email'=>$admin->username]);
+        return reset($rows);
+    }
+
+
     // 口令重置
     public function resetSubmit($user)
     {
@@ -228,16 +238,20 @@ class User extends Model
                     and aa.ep_admin_users_id=? where a.is_enabled=1 order by a.id",[$admin->id]);
     }    
 
-    // 普通管理员绑定功能列表
-    public function adminBindActivities($adminId)
+    /**
+     * 普通管理员绑定功能列表
+     *
+     */
+
+    public function getAdminBindActivities($admin)
     {
-        $rows=Db::query(
-            'select a.id as activity_id,a.name
+        return Db::query(
+            'select a.id as activity_id,a.name,a.entrance_alias as alias
 	            from ep_activities a 
 		            inner join ep_admin_app aa on a.id=aa.ep_activities_id 
-                        and aa.ep_admin_users_id=?',[$adminId]);
+                        and aa.ep_admin_users_id=?',[$admin->id]);
                         
-        return reset($rows);
+        
     }
 
     /**
@@ -271,26 +285,6 @@ class User extends Model
         return false;
     }
     
-    // 普通管理员解绑应用功能
-    // public function unbind($adminId,$activityId=[])
-    // {
-    //     Db::startTrans();
-    //     try{
-    //         foreach($activityId as $id){
-    //             Db::execute('delete from ep_admin_app where ep_activities_id=? and ep_admin_users_id=?',
-    //                 [$id,$adminId]);
-    //         }          
-
-    //         Db::commit();
-    //         return true;
-
-    //     }catch(\Exception $e){
-    //         Db::rollback();
-    //     }   
-
-    //     return false;     
-    // }
-
-
+    
 
 }

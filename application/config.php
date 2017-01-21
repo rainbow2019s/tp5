@@ -143,7 +143,11 @@ return [
         '__ROOT__'=>'/thinkphp/tp5',
         '__COMMON__'=>'/thinkphp/tp5/static/common',
         '__ADMIN__'=>'/thinkphp/tp5/static/admin',
-        '__ADMIN_CONTROL__'=>'/thinkphp/tp5/admin'],
+        '__ADMIN_CONTROL__'=>'/thinkphp/tp5/admin',
+        '__KNOWLEDGE_CONTROL__'=>'/thinkphp/tp5/knowledge',
+        '__KNOWLEDGE__'=>'/thinkphp/tp5/static/knowledge',
+        '__QUESTION_CONTROL__'=>'/thinkphp/tp5/question',
+        '__QUESTION__'=>'/thinkphp/tp5/static/question'],
 
     // 默认跳转页面对应的模板文件
     'dispatch_success_tmpl'  => THINK_PATH . 'tpl' . DS . 'dispatch_jump.tpl',

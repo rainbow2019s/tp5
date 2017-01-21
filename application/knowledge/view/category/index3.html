@@ -1,0 +1,484 @@
+{layout name='layout' /}
+
+<div id='app'>
+    <input type="hidden" id="jiedian" />
+    <ul style="width: 400px;float: left;">
+<li v-for="t in treelist">
+    <span v-if="t.depth==0">
+        <span v-on:click="ajaxQuery(t.id)">{{t.name}}</span>
+    <a href="#!/addCategory/{{t.id}}/{{t.name}}/{{t.depth}}">新增</a>
+    </span>
+    <span v-if="t.depth==1" style="margin-left: 16px;">
+<span v-on:click="ajaxQuery(t.id)">{{t.name}}</span>
+<a href="#!/addCategory/{{t.id}}/{{t.name}}/{{t.depth}}">新增</a>
+<a href="#!/editCategory/{{t.id}}/{{t.name}}/{{t.depth}}">编辑</a>
+<a @click="ajaxRemove(t.id,t.parent_id)">删除</a>
+</span>
+<span v-if="t.depth==2" style="margin-left: 32px;">
+<span v-on:click="ajaxQuery(t.id)">{{t.name}}</span>
+<a href="#!/addCategory/{{t.id}}/{{t.name}}/{{t.depth}}">新增</a>
+<a href="#!/editCategory/{{t.id}}/{{t.name}}/{{t.depth}}">编辑</a>
+<a @click="ajaxRemove(t.id,t.parent_id)">删除</a></span>
+<span v-if="t.depth==3" style="margin-left: 48px;">
+<span>{{t.name}}</span>
+<a href="#!/editCategory/{{t.id}}/{{t.name}}/{{t.depth}}">编辑</a>
+<a @click="ajaxRemove(t.id,t.parent_id)">删除</a>
+</span>
+</li>
+</div>
+<div style="float: left;margin-top: 10px;" id="right">
+<section>
+    <router-view></router-view>
+</section>
+
+</div>
+<!--新增作物分类 第一层请求： {name:'瓜果类',academic:'学术类',parent_id:0,depth:1}-->
+<script id="addCategory_template" type="text/v-template"> 
+    <p>{{pathinfo}}</p> 
+    <form v-if="category.depth==1" @submit.prevent="submit"> 
+            <label class="block mt5 mb5 ml5">农作物分类:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">学术类:</label>
+            <input type="text" v-model='category.academic'/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+
+        </form>
+        <form v-if="category.depth==2" @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">农作物品种:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">俗称:</label>
+            <input type="text" v-model='category.popular'/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+        </form>
+        <form v-if="category.depth==3" @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">病虫名称:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">图片1:</label>
+            <input type="file"  id="file1"/> 
+             <label class="block mt5 mb5 ml5">图片2:</label>
+            <input type="file"   id="file2"/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+        </form>
+</script>
+<!--编辑作物分类-->
+<script id="editCategory_template" type="text/v-template"> 
+    <p>{{pathinfo}}</p>
+  <form v-if="category.depth==1" @submit.prevent="submit"> 
+            <label class="block mt5 mb5 ml5">农作物分类:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">学术类:</label>
+            <input type="text" v-model='category.academic'/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+
+        </form>
+        <form v-if="category.depth==2" @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">农作物品种:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">俗称:</label>
+            <input type="text" v-model='category.popular'/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+        </form>
+        <form v-if="category.depth==3" @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">病虫名称:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">图片1:</label>
+            <input type="file"  id="file1"/> 
+             <label class="block mt5 mb5 ml5">图片2:</label>
+            <input type="file"   id="file2"/> 
+            <br/>
+            <input type="submit" value="提交" class="mt5"/><br/> 
+            <p>{{message}}</p>
+        </form>
+</script>
+<script type="text/javascript">
+    (function (Vue) {
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        var AddCategory = Vue.extend({
+            template: loadTemplate('addCategory'),
+            data: function () {
+                return { category: { name: '', academic: '', popular: '', img_url_1: '', img_url_2: '', parent_id: '', depth: '' }, message: '', pathinfo: '' };
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.pathinfo = transition.to.params.name;
+                    vm.category.parent_id = transition.to.params.id;
+                    vm.category.depth = parseInt(transition.to.params.depth) + 1;
+                }
+            },
+            methods: {
+                ajaxAdd: function (category) {
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxAdd',
+                        { params: JSON.stringify(category) })
+                        .then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            vu.ajaxQuery(category.parent_id, 1);
+                        });
+                },
+                submit: function (event) {
+                    var vm = this;
+                    if (vm.category.depth == 1) {
+                        if (vm.category.name == '') {
+                            vm.message = '农作物分类不能为空';
+                            return;
+                        }
+
+                        if (vm.category.academic == '') {
+                            vm.message = '学术类不能为空！';
+                            return;
+                        }
+                        if (confirm("你确定要新增农作物分类吗？")) {
+
+                            vm.ajaxAdd(vm.category);
+                            return;
+                        }
+                    }
+                    if (vm.category.depth == 2) {
+                        if (vm.category.name == '') {
+                            vm.message = '农作物品种不能为空';
+                            return;
+                        }
+
+                        if (vm.category.popular == '') {
+                            vm.message = '俗称不能为空！';
+                            return;
+                        }
+                        if (confirm("你确定要新增农作物分类吗？")) {
+
+                            vm.ajaxAdd(vm.category);
+
+                            return;
+                        }
+                    }
+                    if (vm.category.depth == 3) {
+                        if (vm.category.name == '') {
+                            vm.message = '病虫不能为空';
+                            return;
+                        }
+                        if (document.getElementById('file1').files[0] == undefined) {
+                            vm.message = '图片1不能为空！';
+                            return;
+                        }
+                        if (document.getElementById('file2').files[0] == undefined) {
+                            vm.message = '图片2不能为空！';
+                            return;
+                        }
+                        // 创建一个FileReader对象
+                        var reader = new FileReader();
+
+                        // 绑定load事件
+
+                        reader.onload = function (e) {
+
+                            vm.category.img_url_1 = e.target.result;
+                            var reader1 = new FileReader();
+
+                            reader1.onload = function (e) {
+                                vm.category.img_url_2 = e.target.result;
+                                if (confirm("你确定要新增病虫吗？")) {
+                                    vm.ajaxAdd(vm.category);
+
+                                    return;
+                                }
+                            }
+
+                            reader1.readAsDataURL(document.getElementById('file2').files[0]);
+                        }
+
+                        // 读取File对象的数据
+                        reader.readAsDataURL(document.getElementById('file1').files[0]);
+
+                    }
+
+                }
+            }
+        })
+
+        var EditCategory = Vue.extend({
+            template: loadTemplate('editCategory'),
+            data: function () {
+                return { category: { id: '', name: '', academic: '', popular: '', img_url_1: '', img_url_2: '', depth: '' }, message: '', pathinfo: '' };
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.pathinfo = transition.to.params.name;
+                    vm.category.id = transition.to.params.id;
+                    vm.category.depth = transition.to.params.depth;
+                    vm.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxElement', { params: JSON.stringify(vm.category) }).then((response) => {
+                        vm.category = response.data.data;
+                    });
+                }
+            },
+            methods: {
+                ajaxEdit: function (category) {
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxEdit',
+                        { params: JSON.stringify(category) })
+                        .then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            vu.ajaxQuery(category.parent_id, 1);
+                        });
+                },
+                submit: function (event) {
+                    var vm = this;
+                    if (vm.category.depth == 1) {
+                        if (vm.category.name == '') {
+                            vm.message = '农作物分类不能为空';
+                            return;
+                        }
+
+                        if (vm.category.academic == '') {
+                            vm.message = '学术类不能为空！';
+                            return;
+                        }
+                        if (confirm("你确定要修改农作物分类吗？")) {
+
+                            vm.ajaxEdit(vm.category);
+                            return;
+                        }
+                    }
+                    if (vm.category.depth == 2) {
+                        if (vm.category.name == '') {
+                            vm.message = '农作物品种不能为空';
+                            return;
+                        }
+
+                        if (vm.category.popular == '') {
+                            vm.message = '俗称不能为空！';
+                            return;
+                        }
+                        if (confirm("你确定要修改农作物分类吗？")) {
+
+                            vm.ajaxEdit(vm.category);
+
+                            return;
+                        }
+                    }
+                    if (vm.category.depth == 3) {
+                        if (vm.category.name == '') {
+                            vm.message = '病虫不能为空';
+                            return;
+                        }
+                        if (document.getElementById('file1').files[0] == undefined && document.getElementById('file2').files[0] == undefined) {
+                            if (confirm("你确定要修改病虫吗？")) {
+                                vm.ajaxEdit(vm.category);
+
+                                return;
+                            }
+                        }
+
+
+                        if (document.getElementById('file1').files[0] != undefined &&
+                            document.getElementById('file2').files[0] != undefined) {
+
+                            // 创建一个FileReader对象
+                            var reader = new FileReader();
+
+                            // 绑定load事件
+
+                            reader.onload = function (e) {
+
+                                vm.category.img_url_1 = e.target.result;
+                                var reader1 = new FileReader();
+
+                                reader1.onload = function (e) {
+                                    vm.category.img_url_2 = e.target.result;
+                                    if (confirm("你确定要修改病虫吗？")) {
+                                        vm.ajaxEdit(vm.category);
+
+                                        return;
+                                    }
+                                }
+
+                                reader1.readAsDataURL(document.getElementById('file2').files[0]);
+                            }
+
+                            // 读取File对象的数据
+                            reader.readAsDataURL(document.getElementById('file1').files[0]);
+                            return;
+                        }
+                        if (document.getElementById('file1').files[0] != undefined) {
+
+                            // 创建一个FileReader对象
+                            var reader = new FileReader();
+
+                            // 绑定load事件
+
+                            reader.onload = function (e) {
+
+                                vm.category.img_url_1 = e.target.result;
+
+                                if (confirm("你确定要修改病虫吗？")) {
+                                    vm.ajaxEdit(vm.category);
+
+                                    return;
+                                }
+                            }
+
+                            // 读取File对象的数据
+                            reader.readAsDataURL(document.getElementById('file1').files[0]);
+                            return;
+                        }
+                        if (document.getElementById('file2').files[0] != undefined) {
+
+                            // 创建一个FileReader对象
+                            var reader = new FileReader();
+
+                            // 绑定load事件
+
+                            reader.onload = function (e) {
+
+                                vm.category.img_url_2 = e.target.result;
+
+                                if (confirm("你确定要修改病虫吗？")) {
+                                    vm.ajaxEdit(vm.category);
+
+                                    return;
+                                }
+                            }
+
+                            // 读取File对象的数据
+                            reader.readAsDataURL(document.getElementById('file2').files[0]);
+                            return;
+                        }
+                    }
+
+                }
+            }
+        })
+
+        var App = Vue.extend({})
+
+        var router = new VueRouter()
+
+        router.map({
+            '/addCategory/:id/:name/:depth': {
+                name: 'addCategory',
+                component: AddCategory
+            },
+            '/editCategory/:id/:name/:depth': {
+                name: 'editCategory',
+                component: EditCategory
+            }
+        })
+
+        router.start(App, '#right')
+    })(Vue)
+
+   
+    var vu = new Vue({
+        el: '#app',
+        data: {
+            treelist: [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }],
+            tree: {
+                id: 0,
+                name: "农作物",
+                parent_id: 0,
+                depth: 0,
+                children: []
+            },
+            id: 0,
+
+            message: ''
+        },
+        methods: {
+            // 查找指定id的结点
+            find: function (children, id) {
+
+                if (id == 0) {
+                    return this.tree;
+                }
+
+
+                for (var element of children) {
+                    //  console.log(element.id + ':' + element.name);
+                    //  console.info(element);
+                    if (element.id == id) {
+                        return element;
+                    }
+
+                    if (element.children.length > 0) {
+                        return this.find(element.children, id);
+                    }
+
+
+                }
+
+            },
+            // 遍历树型结点 转换为一维数组
+            traverse: function (children) {
+
+                for (var element of children) {
+                    this.treelist.push({ id: element.id, name: element.name, parent_id: element.parent_id, depth: element.depth });
+
+                    if (element.children.length > 0) {
+                        this.traverse(element.children);
+                    }
+                }
+            },
+
+            convert: function (event) {
+                this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }];
+                this.traverse(this.tree.children);
+
+            },
+            ajaxQuery: function (parent_id, ins = 0) {
+                var val = document.getElementById('jiedian').value;
+                if (val != parent_id || val == '' || ins == 1) {
+                    document.getElementById('jiedian').value = parent_id;
+
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxQuery',
+                        { params: JSON.stringify({ parent_id: parent_id }) }).then((response) => {
+
+                            var node = this.find(this.tree.children, parent_id);
+
+                            node.children = [];
+
+                            for (var d of response.data.data) {
+                                node.children.push({ id: d.id, name: d.name, parent_id: node.id, depth: node.depth + 1, children: [] })
+                            }
+                            this.convert();
+
+                        })
+                }
+            },
+            ajaxRemove: function (id, parent_id) {
+                if (confirm("你确定要删除吗？")) {
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxQuery',
+                        { params: JSON.stringify({ parent_id: id }) }).then((response) => {
+                            var len = response.data.data.length;
+                            if (len > 0) {
+                                alert("请先删除子节点");
+                            } else {
+                                this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxRemove',
+                                    { params: JSON.stringify({ id: id }) }).then((response) => {
+                                        this.ajaxQuery(parent_id, 1);
+                                    })
+                            }
+                        })
+                }
+            }
+        }
+    })
+
+
+</script>

@@ -1,0 +1,380 @@
+{layout name='layout' /}
+
+<div id='app'>
+    <section>
+        <router-view></router-view>
+    </section>
+</div>
+<!--  name    identity        phone  email  is_enabled  is_white     register_time  weixin   security  -->
+<!--真实姓名 达人|专家|关注用户 手机    邮箱  允许|禁止     是否是白名单 注册时间        微信号     验证码 个性签名 城市 等级 性别-->
+{// 白名单列表模板}
+<script id="list_template" type="text/v-template">
+    <button v-link="{name:'listAdd',params: {num:num,size:size}}" class="cp">新增专家</button> 
+    <input type="text" v-model='text'/><button @click="searchList" class="cp ml5">搜索</button>{{message}}
+        <table style="width:100%">
+            <thead>
+                <tr>
+                    <td style="width:5%">序号</td>
+                    <td style="width:10%">姓名</td>
+                    <td style="width:10%">性别</td>
+                    <td style="width:15%">手机号</td>
+                    <td style="width:15%">邮箱</td>
+                    <td style="width:10%">身份</td>
+                    <td style="width:10%">状态</td>
+                    <td style="width:10%">白名单</td> 
+                    <td style="width:15%">操作</td>
+                 </tr>
+            </thead>
+        <tbody>
+            <tr v-for="list in whitelist">
+                <td>{{list.rowid}}</td>
+                <td>{{list.name}}</td>
+                <td>{{list.sex}}</td>
+                <td>{{list.phone}}</td>
+                <td>{{list.email}}</td>
+                <td>{{list.identity}}</td>
+                <td v-if="list.is_enabled==0"><a class="cp" @click="ajaxEnabledStatus(list.id,1)">禁止</a></td>
+                <td v-if="list.is_enabled==1"><a class="cp" @click="ajaxEnabledStatus(list.id,0)">允许</a></td>
+                <td v-if="list.is_white==0"><a class="cp" @click="ajaxWhiteStatus(list.id,1)">黑名单</a></td>
+                <td v-if="list.is_white==1"><a class="cp" @click="ajaxWhiteStatus(list.id,0)">白名单</a></td>                   
+                <td>
+                    <a class="cp" v-link="{name:'listEdit',params: { id: list.id,num:num,size:size }}">编辑</a>
+                    <a class="cp" href="#" @click="ajaxUserRemove(list.id)">删除</a> 
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td style="text-align=center" colspan="9">
+                    <a class="cp"@click="turnPage(1)">首页</a>
+                    <a class="cp" v-if="num>1" @click="turnPage(parseInt(num)-1)">上一页</a>
+                    <a class="cp color-lightgray" v-if="num<=1" >上一页</a>
+                    <a class="cp" v-if="num<count" @click="turnPage(parseInt(num)+1)">下一页</a>
+                    <a class="cp color-lightgray" v-if="num>=count">下一页</a>
+                    <a class="cp">要跳到第<input type="text" style="width:30px;" v-model='num'>页</a>
+                    <button type="btn" @click="turnPage(num)">跳转</button>
+                    <a class="cp">共{{count}}页</a>
+                    <a class="cp"@click="turnPage(count)">尾页</a>
+                </td>
+            </tr>
+        </tfoot>
+    </table> 
+</script>
+{//专家新增模板}
+<script id="listAdd_template" type="text/v-template">
+    <div>
+        <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">姓名:</label>
+            <input type="text" v-model='whitelist.name'/>
+            <label class="block mt5 mb5 ml5">性别:</label> 
+             <input type="text" v-model='whitelist.sex'/>
+            <!--<input name="sex" type="radio" value="whitelist.sex" />男 
+           <input name="sex" type="radio" value="whitelist.sex" />女 -->
+            <!--<input type="text" v-model='whitelist.sex'/>-->
+            <label class="block mt5 mb5 ml5">手机号:</label>
+            <input type="text" v-model='whitelist.phone'/>
+            <label class="block mt5 mb5 ml5">邮箱：</label>
+            <input type="text" v-model='whitelist.email'/> 
+            <label class="block mt5 mb5 ml5">城市：</label>
+            <input type="text" v-model='whitelist.city'/><br/> 
+            <input type="submit" value="提交" class="mt5"/>        
+            <p>{{message}}</p>
+
+        </form>
+    </div>
+</script>
+{// 专家编辑模板}
+<script id="listEdit_template" type="text/v-template">
+    <div>
+        <form @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">姓名:</label>
+            <input type="text" v-model='whitelist.name'/>
+            <label class="block mt5 mb5 ml5">性别:</label> 
+             <input type="text" v-model='whitelist.sex'/> 
+            <label class="block mt5 mb5 ml5">手机号:</label>
+            <input type="text" v-model='whitelist.phone'/>
+            <label class="block mt5 mb5 ml5">邮箱：</label>
+            <input type="text" v-model='whitelist.email'/>
+            <label class="block mt5 mb5 ml5">等级：</label>
+            <input type="text" v-model='whitelist.rank'/><br/> 
+            <input type="submit" value="提交" class="mt5"/>        
+            <p>{{message}}</p>
+
+        </form>
+    </div>
+</script>
+ 
+<script type="text/javascript">
+    (function (Vue) {
+
+        // 通用加载模板方法
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        // 用户列表模板
+        var List = Vue.extend({
+            template: loadTemplate('list'),
+            data: function () {
+
+                return {
+                    whitelist: [],
+                    num: '',
+                    size: '',
+                    count: '',
+                    text: '',
+                    message: ''
+                };
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.num = transition.to.params.num;
+                    vm.size = transition.to.params.size;
+                    this.ajaxWhitelist();
+
+                }
+            },
+            methods: {
+                clear: function () {
+                    this.message = '';
+                },
+                ajaxWhitelist: function () {
+                    var vm = this;
+                    this.$http.post('__QUESTION_CONTROL__/whitelist/ajaxWhitelist',
+                        { params: JSON.stringify({ num: vm.num, size: vm.size, text: vm.text }) }).then((response) => {
+                            this.whitelist = response.data.data;
+                            this.count = response.data.msg.count;
+
+                        })
+                },
+
+                //删除白名单  
+                ajaxUserRemove: function (id) {
+                    if (confirm("你确定要删除吗？")) {
+                        this.clear();
+                        this.$http.post('__QUESTION_CONTROL__/whitelist/ajaxUserRemove', { params: JSON.stringify({ id: id }) }).then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            //再次请求刷新页面
+                            this.ajaxWhitelist();
+                        });
+                    }
+                },
+                ajaxEnabledStatus: function (id, is_enabled) {
+                    var me = is_enabled == 0 ? '你确定要禁止专家吗？' : '你确定要允许专家吗？';
+                    if (confirm(me)) {
+                        this.clear();
+                        this.$http.post('__QUESTION_CONTROL__/whitelist/ajaxEnabledStatus',
+                            { params: JSON.stringify({ id: id, value: is_enabled }) }).then((response) => {
+                                this.message = response.data.msg;
+                                this.ajaxWhitelist();
+                            });
+                    }
+                }
+                ,
+                ajaxWhiteStatus: function (id, is_white) {
+                    if (confirm("你确定要修改白名单吗？")) {
+                        this.clear();
+                        this.$http.post('__QUESTION_CONTROL__/whitelist/ajaxWhiteStatus',
+                            { params: JSON.stringify({ id: id, value: is_white }) }).then((response) => {
+                                this.message = response.data.msg;
+                                this.ajaxWhitelist();
+                            });
+                    }
+                },
+                //翻页
+                turnPage: function (num) {
+                    var vm = this;
+                    vm.clear();
+                    if (num > vm.count || isNaN(num)) {
+                        vm.message = "请正确输入页数";
+                        return;
+                    }
+                    vm.num = num;
+                    router.go('/list/' + vm.num + '/' + vm.size);
+                },
+                //搜索
+                searchList: function () {
+                    //如果路由在第一页，执行一次查询 否则跳转路由
+                    if (this.num == 1) {
+                        this.ajaxWhitelist();
+                    } else {
+                        router.go('/list/1/' + this.size);
+                    }
+
+
+                }
+            }
+        })
+        // 专家新增模板
+        var ListAdd = Vue.extend({
+            template: loadTemplate('listAdd'),
+            data: function () {
+                return {
+                    whitelist: { name: '', sex: '', phone: '', email: '', city: '' },
+                    num: '',
+                    size: '',
+                    message: ''
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.num = transition.to.params.num;
+                    vm.size = transition.to.params.size;
+
+                }
+            },
+            methods: {
+                submit: function (event) {
+                    var vm = this;
+
+                    if (vm.whitelist.name == '') {
+                        vm.message = '专家姓名不能为空';
+                        return;
+                    }
+
+                    if (vm.whitelist.phone == '') {
+                        vm.message = '手机号不能为空！';
+                        return;
+                    }
+
+                    if (vm.whitelist.email == '') {
+                        vm.message = '邮箱不能为空！';
+                        return;
+                    }
+
+                    if (!/^(13[0-9]{9})|(14[0-9]{9})|(18[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})$/.test(vm.whitelist.phone)) {
+                        vm.message = '电话格式不正确';
+                        return;
+                    }
+
+                    if (!/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(vm.whitelist.email)) {
+                        vm.message = '邮箱格式不正确';
+                        return;
+                    }
+
+
+                    if (confirm("你确定要新增专家吗？")) {
+
+                        vm.message = '';
+
+                        vm.$http.post('__QUESTION_CONTROL__/whitelist/ajaxExpertAdd',
+                            { params: JSON.stringify(vm.whitelist) })
+                            .then((response) => {
+                                //console.log(response.data);
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                router.go('/list/' + vm.num + '/' + vm.size);
+
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+        //专家编辑模板
+        var ListEdit = Vue.extend({
+            template: loadTemplate('listEdit'),
+            data: function () {
+                return {
+                    whitelist: { id: '', name: '', sex: '', phone: '', email: '', rank: '' },
+                    num: '',
+                    size: '',
+                    message: ''
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.whitelist.id = transition.to.params.id;
+                    vm.num = transition.to.params.num;
+                    vm.size = transition.to.params.size;
+                    vm.$http.post('__QUESTION_CONTROL__/whitelist/ajaxUserEdit', { params: JSON.stringify(vm.whitelist) }).then((response) => {
+                        vm.whitelist = response.data.data;
+                    });
+                }
+            },
+            methods: {
+
+                submit: function (event) {
+                    var vm = this;
+
+                    if (vm.whitelist.name == '') {
+                        vm.message = '专家姓名不能为空';
+                        return;
+                    }
+
+                    if (vm.whitelist.phone == '') {
+                        vm.message = '手机号不能为空！';
+                        return;
+                    }
+
+                    if (vm.whitelist.email == '') {
+                        vm.message = '邮箱不能为空！';
+                        return;
+                    }
+
+                    if (!/^(13[0-9]{9})|(14[0-9]{9})|(18[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})$/.test(vm.whitelist.phone)) {
+                        vm.message = '电话格式不正确';
+                        return;
+                    }
+
+                    if (!/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(vm.whitelist.email)) {
+                        vm.message = '邮箱格式不正确';
+                        return;
+                    }
+                    if (confirm("你确定要修改专家吗？")) {
+                        vm.message = '';
+
+                        vm.$http.post('__QUESTION_CONTROL__/whitelist/ajaxExpertEditSubmit',
+                            { params: JSON.stringify(vm.whitelist) })
+                            .then((response) => {
+                                if (response.data.result == 'error') {
+                                    vm.message = response.data.msg;
+                                    return;
+                                }
+
+                                // router.go('/question');
+                                router.go('/list/' + vm.num + '/' + vm.size);
+                            });
+
+                        return;
+                    }
+                }
+            }
+        })
+        
+
+        var App = Vue.extend({})
+
+        var router = new VueRouter()
+
+        router.map({
+
+            '/list/:num/:size': {
+                name: 'list',
+                component: List
+            },
+            '/listAdd/:num/:size': {
+                name: 'listAdd',
+                component: ListAdd
+            },
+            '/listEdit/:id/:num/:size': {
+                name: 'listEdit',
+                component: ListEdit
+            } 
+        })
+        router.redirect({
+            '/': 'list/1/10'
+        })
+        router.start(App, '#app')
+    })(Vue) 
+</script>

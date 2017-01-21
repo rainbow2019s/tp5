@@ -1,0 +1,50 @@
+{layout name='layout' /}
+
+<div style="margin-left:200px;" id="app">
+<form id="resetForm" method="post" action="__ADMIN_CONTROL__/index/resetSubmit" @submit.prevent="submit">
+    <label class="block mt5 mb5 ml5">新密码:</label>
+    <input type="password" name="password1" v-model="password1" />
+    <label class="block mt5 mb5 ml5">确认密码：</label>
+    <input type="password" name="password2" v-model="password2" /></br>
+    <input type="submit" value="提交" class="mt5" />
+    
+    <p>{{message}}</p>
+</form>
+</div>
+
+<script type="text/javascript">
+
+ new Vue({
+        el: '#app',
+        data: {
+            password1:'',
+            password2:'',
+            message:''
+        },
+        methods:{
+            submit:function(event){
+                var vm=this;
+                if(vm.password1==''){
+                    vm.message='新密码不能为空';
+                    return;
+                }
+
+                if(vm.password2==''){
+                    vm.message='确认密码不能为空';
+                    return;
+                }
+
+                if(vm.password1!=vm.password2){
+                    vm.message='两次密码输入不匹配';
+                    return;
+                }
+
+                if(!confirm('真的确认修改密码吗?')){
+                    return;
+                }
+                document.getElementById('resetForm').submit();
+            }
+        }
+ });
+
+</script>

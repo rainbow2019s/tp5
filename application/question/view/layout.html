@@ -30,28 +30,35 @@
 
 </head>
 
-<body>
-  <div id="header" class="pr" style=" background:#80bf57  no-repeat left center;height: 50px;">
-<div id="head_info" style="text-align: right;color: white;font-size: 12px;">
-<p class="mr5">{$user->name}</p>
-<p class="mr5" style="cursor: pointer">
-<span id="modifyPa" class="ib cp"><a href='__ADMIN_CONTROL__/auth/reset'>修改密码</a></span>
-<!--<span id="exit" class="ib ml5 cp">退出</span>-->
-<a href='__ADMIN_CONTROL__/auth/logout'>退出</a>
-</p>
-</div>
-</div>
-<div id="content" class="pr">
-  <div id="menu" style="height: 550px; float: left;width: 220px;background-color: yellow;">
-<h5>{$menu.name}</h5>
-<ul>
-  {volist name='menu.submenu' id='vo'}
-  <li><a href="{$vo.url}">{$vo.name}</a></li>
-  {/volist}
-</ul>
-</div>
-<div id="main" class="ml5" style="float: left;overflow: hidden; width: 965px;"> {__CONTENT__}
-</div>
+<body id='app'>
+  <div class="pr" style=" background:#80bf57  no-repeat left center;height: 50px;">
+    <div style="text-align: right;color: white;font-size: 12px;">
+      <p class="mr5">{$user->name}</p>
+      <p class="mr5" style="cursor: pointer">
+        <span class="ib cp">
+          <a href='__KNOWLEDGE_CONTROL__/index/reset'>修改密码</a>
+        </span>
+        <a href='__ADMIN_CONTROL__/index/logout'>退出</a>
+     </p>
+   </div>
+  </div>
+
+
+  <div id="content" class="pr">
+    <div id="menu" style="height: 550px; float: left;width: 220px;background-color: yellow;">
+      {volist name='menu' id='vo'}
+      <h5>{$vo->name}</h5>
+      <ul>
+        {foreach name='vo->submenu' item='for'}
+        <li><a href="{$for.url}">{$for.name}</a></li>
+        {/foreach}
+      </ul>
+      {/volist}
+   </div>
+  </div>
+  <div id="main" class="ml5" style="float: left;overflow: hidden; width: 965px;"> {__CONTENT__}
+
+  </div>
 </div>
 </div>
 <div id="foot" style="clear: both; text-align: center;background:#80bf57  no-repeat left center;">

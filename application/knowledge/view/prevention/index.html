@@ -1,0 +1,369 @@
+{layout name='layout' /}
+
+<section>
+    <router-view></router-view>
+</section>
+
+<script id="tree_template" type="text/v-template">
+
+    <div style="width: 300px;float: left; ">
+    <ul>
+        <li v-for="tree in treelist">
+            <span v-if='tree.depth==0' v-on:click="query(tree.id)" style='margin-left:0px;color:gray;'>{{tree.name}}</span>
+            <span v-if='tree.depth==1' v-on:click="query(tree.id)" style='margin-left:16px;color:gray;'>{{tree.name}}</span>
+            <span v-if='tree.depth==2' v-on:click="query(tree.id)" style='margin-left:32px;color:gray;'>{{tree.name}}</span>
+            <span v-if='tree.depth==3' v-link="{name:'edit',params:{id:tree.id,depth:tree.depth}}"style='margin-left:48px'>{{tree.name}}</span> 
+                     
+        </li>
+    </ul>
+    </div>
+
+    <div style="float: left;">
+        <p @transfer="query">{{pathinfo}}</p>
+        <router-view></router-view>
+    </div> 
+</script>
+<script id="edit_template" type="text/v-template">
+
+   <form  @submit.prevent="submit">
+            <label class="block mt5 mb5 ml5">病虫害特征与作物症状:</label>
+            <textarea rows="3" cols="20" style="width:360px;"v-model='prevent.feature'></textarea>            
+            <label class="block mt5 mb5 ml5">发生条件与发生规律:</label>
+            <textarea rows="3" cols="20" style="width:360px;" v-model='prevent.law'></textarea>
+            <label class="block mt5 mb5 ml5">最佳防治期:</label>
+            <textarea rows="3" cols="20" style="width:360px;" v-model='prevent.prevention'></textarea>
+            <label class="block mt5 mb5 ml5">防治措施:</label>
+            <textarea rows="3" cols="20" style="width:360px;" v-model='prevent.measure'></textarea>
+            <label class="block mt5 mb5 ml5">用药技巧:</label>
+            <textarea rows="3" cols="20" style="width:360px;" v-model='prevent.skill'></textarea>
+             <label v-show="prevent.images.length==0" class="block mt5 mb5 ml5">图片: 
+            <input type="file"  id="file" multiple="multiple"/></label>
+            <p v-show="prevent.images.length>0"> 图片:<a v-on:click="clear" class="cp">删除</a><br/>
+                <img v-for="img in prevent.images" v-bind:src="img" track-by="$index" class="mr5" style="width:180px"/>
+               
+            </p>
+             
+            <br/>
+            <input type="submit" value="提交" class="mt5 cp"/><br/> 
+            <p>{{message}}</p>
+        </form>
+
+</script>
+
+
+<script type="text/javascript">
+    (function (Vue) {
+
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        var node_id = -1;
+
+        var App = Vue.extend({})
+
+        var Tree = Vue.extend({
+            template: loadTemplate('tree'),
+            data: function () {
+                this.refresh();
+                return {
+                    treelist: [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }],
+                    tree: {
+                        id: 0,
+                        name: "农作物",
+                        parent_id: 0,
+                        depth: 0,
+                        expand: false,
+                        children: []
+                    },
+                    node: {},
+                    pathinfo: '农作物'
+                }
+            },
+            methods: {
+                query: function (id, status = false) {
+
+                    this.find(this.tree.children, id);
+                    this.node.expand = !this.node.expand;
+                    this.pathinfo = this.path(id);
+
+                    // 剪枝操作
+                    if (!this.node.expand) {
+                        this.node.children = [];
+                        this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }];
+                        this.traverse(this.tree.children);
+                        return;
+                    }
+
+                    if (!status) {
+                        if (this.node.depth == 3 || this.node.children.length > 0) {
+                            return;
+                        }
+                    }
+
+                    this.ajaxQuery();
+                },
+                ajaxQuery: function () {
+
+                    this.$http.post('__KNOWLEDGE_CONTROL__/prevention/ajaxQuery',
+                        { params: JSON.stringify({ parent_id: this.node.id }) }).then((response) => {
+                            // 生成树
+                            this.node.children = [];
+                            for (var element of response.data.data) {
+                                this.node.children.push(
+                                    {
+                                        id: element.id, name: element.name, parent_id: element.parent_id,
+                                        depth: element.depth, expand: false, children: []
+                                    });
+                            }
+
+                            this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0, expand: false }];
+                            this.traverse(this.tree.children);
+
+                        })
+                },
+
+
+                remove: function (id) {
+
+                    this.find(this.tree.children, id);
+                    if (this.node.children.length > 0) {
+                        alert('请先删除子节点');
+                        return;
+                    }
+
+                    this.ajaxRemove();
+
+                },
+
+                refresh: function () {
+                    var vm = this;
+                    window.setInterval(function () {
+                        //console.log(node_id);
+                        if (node_id != -1) {
+                            vm.query(node_id, true);
+                            //console.log(node_id);
+                            node_id = -1;
+                        }
+                    }, 500);
+                },
+                path: function (id) {
+
+                    var depth = this.node.depth;
+                    var info = [];
+
+                    while (depth >= 0) {
+                        for (var element of this.treelist) {
+                            if (element.id == id) {
+                                info.unshift(element.name);
+                                id = element.parent_id;
+                                depth--;
+                            }
+                        }
+                    }
+
+                    return info.join('/');
+
+                },
+
+                // 查找指定id的结点
+                find: function (children, id) {
+
+                    if (id == 0) {
+                        this.node = this.tree;
+                    }
+
+                    for (var element of children) {
+                        if (element.id == id) {
+                            this.node = element;
+                            return;
+                        }
+
+                        if (element.children.length > 0) {
+                            this.find(element.children, id);
+                        }
+
+                    }
+
+                },
+                // 遍历树型结点 转换为一维数组
+                traverse: function (children) {
+
+                    for (var element of children) {
+                        this.treelist.push({
+                            id: element.id, name: element.name, parent_id: element.parent_id,
+                            depth: element.depth
+                        });
+
+                        if (element.children.length > 0) {
+                            this.traverse(element.children);
+                        }
+                    }
+                }
+            }
+        })
+
+
+
+        var Edit = Vue.extend({
+            template: loadTemplate('edit'),
+            data: function () {
+                return {
+                    depth: 1,
+                    prevent: { id: '', feature: '', law: '', prevention: '', measure: '', skill: '', images: [] },
+                    message: ''
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.prevent.id = transition.to.params.id;
+                    vm.depth = transition.to.params.depth;
+                    vm.prevent.depth = vm.depth;
+
+                    this.ajaxElement();
+
+                }
+            },
+            methods: {
+                submit: function (event) {
+                    this.message = '';
+                    var vm = this;
+                    if (vm.prevent.feature == '') {
+                        vm.message = '病虫害特征与作物症状不能为空';
+                        return;
+                    }
+                    if (vm.prevent.law == '') {
+                        vm.message = '发生条件与发生规律不能为空';
+                        return;
+                    } if (vm.prevent.prevention == '') {
+                        vm.message = '最佳防治期不能为空';
+                        return;
+                    } if (vm.prevent.measure == '') {
+                        vm.message = '防治措施不能为空';
+                        return;
+                    }
+                    // if (vm.prevent.skill == '') {
+                    //     vm.message = '用药技巧不能为空';
+                    //     return;
+                    // }
+                    if (vm.prevent.images.length == 0) {
+                        var imageFiles = document.getElementById('file').files;
+                        if (imageFiles.length == 0) {
+                            vm.message = '请上传图片';
+                            return;
+                        }
+                    }
+
+
+                    if (confirm("你确定要更新吗？")) {
+                        var imageFiles = document.getElementById('file').files;
+
+
+                        // var images = [];
+
+                        var promises = [];
+
+                        var image = function (url) {
+                            return new Promise(function (resolve, reject) {
+                                var reader = new FileReader();
+                                reader.readAsDataURL(url);
+                                reader.onload = resolve;
+                                reader.onerror = reject;
+                            })
+                        };
+                        var x = 0;
+                        var arr = Array.from({ length: imageFiles.length }, () => x++);
+
+                        var promises = arr.map(function (id) {
+                            return image(imageFiles[id]).then((e) => {
+                                vm.prevent.images.push(e.target.result);
+                            });
+                        });
+
+                        Promise.all(promises).then(function (e) {
+                            vm.ajaxEdit();
+                        });
+
+
+
+
+
+
+
+                        // for (var i = 0; i < imageFiles.length; i++) {
+                        //     // 创建一个FileReader对象
+                        //     var reader = new FileReader();
+                        //     // 读取File对象的数据
+                        //     reader.readAsDataURL(imageFiles[i]);
+                        //     // 绑定load事件
+                        //     reader.onload = function (e) {
+                        //         vm.prevent.images.push(e.target.result);
+                        //     }
+                        // }
+
+                        // window.setTimeout(function () {
+
+                        //     vm.ajaxEdit();
+
+                        // }, imageFiles.length * 3000)
+
+                        return;
+                    }
+                },
+                ajaxEdit: function () {
+                    var parent_id = this.prevent.parent_id;
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/prevention/ajaxEdit',
+                        { params: JSON.stringify(this.prevent) })
+                        .then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            this.message = response.data.msg;
+
+
+                        });
+                },
+                ajaxElement: function () {
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/prevention/ajaxElement',
+                        { params: JSON.stringify({ id: vm.prevent.id }) }).then((response) => {
+                            vm.prevent = response.data;
+                        });
+                },
+                clear: function () {
+                    if (confirm("你确定要更换图片吗？")) {
+                        this.prevent.images = [];
+                    }
+                }
+            }
+        })
+
+        var router = new VueRouter()
+
+        router.map({
+
+            '/tree/:id/:depth': {
+                name: 'tree',
+                component: Tree,
+                subRoutes: {
+
+                    '/edit': {
+                        name: 'edit',
+                        component: Edit
+                    }
+                }
+            }
+        })
+        router.redirect({
+            '/': '/tree/0/0'
+        })
+
+        router.start(App, '#app')
+
+
+    })(Vue)
+
+</script>

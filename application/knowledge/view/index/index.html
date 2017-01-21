@@ -1,4 +1,299 @@
-<form action="__ROOT__/knowledge/index/upload" enctype="multipart/form-data" method="post">
-<input type="file" name="image" /> <br>
-<input type="submit" value="上传" />
-</form>
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>病虫害自查</title>
+    <link rel="stylesheet" type="text/css" href="__KNOWLEDGE__/css/index.css">
+    <style type="text/css">
+  body{
+          font-family: "宋体","Microsoft YaHei",Arial,Helvetica,sans-serif;
+
+  }
+    #header,#content,#foot{
+        width: 1190px; margin:0 auto; 
+    }
+    .block{
+            display: block;
+    }
+    .pr{position: relative;}
+    .w250{width:250px;}
+    .mt5{margin-top: 5px;}
+    .mb5{margin-bottom: 5px;}
+    .w150{width: 150px;}
+    .w100{width: 100px;}
+    .mr5{margin-right: 5px;}
+    .ml5{margin-left: 5px;}
+    .cp{cursor: pointer;}
+    li{list-style: none;cursor: pointer;line-height: 30px;}
+    body,ul,li{margin:0;padding:0;}
+    .fl{float:left;}
+    .color-lightgray{color:lightgray}
+    .tc{text-align: center;}
+  </style>
+
+<script src="__COMMON__/vue-1.0.26/vue.js"></script>
+<script src="__COMMON__/vue-router-0.7.13/vue-router.js"></script>
+<script src="__COMMON__/vue-resource-1.0.3/vue-resource.js"></script>
+<script src="__COMMON__/vue-plugins/LnSlider.js"></script>
+</head>
+
+<body id="app">
+    <section>
+        <router-view></router-view>
+    </section>
+    <script id="search_template" type="text/v-template">
+    <div style="position:fixed;z-index:1;background-color:#fff;width:400px; padding:5px;">
+        <input type="text" class="mr5 mb5" v-model="word"/><button v-on:click="ajaxSearch(word)">搜索</button>
+         <button v-on:click="home">home</button></br> {{message}}
+        </div>
+    <div style="clear:both;position:absolute;margin-top:30px;"> 
+        <router-view></router-view>
+        
+    </div> 
+</script>
+<script id="list_template" type="text/v-template">
+     <div style="font-weight:bold;clear: both;" v-for="lis in list">
+        <p style="color:#000;font-size:30px;">{{lis.name}}</p>
+        <span v-for="item in lis.items"  v-link="{name:'pest',params:{id:item.id}}" class="w100 fl tc"
+         style="height:39px;line-height39px;color:#1ff31f;font-size:24px;">{{item.name}}</span>
+    </div>
+</script>
+<script id="pest_template" type="text/v-template"> 
+    <p v-for="pes in list" v-link="{name:'detail',params:{id:pes.id}}"> 
+       <img v-bind:src="pes.img_url_1" style="width:120px; height:120px;"></img>
+       <img v-bind:src="pes.img_url_2" style="width:120px; height:120px;"></img>
+       <span style="font-size:24px;">{{pes.name}}</span>
+   </p>
+</script>
+<script id="detail_template" type="text/v-template">
+<!--<img  v-bind:src="now" class="mr5" style="width:340px;"/></li>-->
+ <div class="container" sty>
+    <div class="wrapper">
+      <ul id="slider"> 
+        <li v-for="img in list.images"><img v-bind:src="img" class="mr5"/></li>  
+      </ul>
+      <span class="prev" id="prev"></span>
+      <span class="next" id="next"></span>
+    </div>
+  </div>
+    <div style="clear:both">
+     <label v-if="list.feature!=''" class="block mt5 mb5 ml5" style="font-size:20px;color:#008000;line-height:40px;">病虫害特征与作物症状:</label>
+            <span style="width:360px;">{{list.feature}}</span>            
+            <label v-if="list.law!=''" class="block mt5 mb5 ml5" style="font-size:20px;color:#008000;line-height:40px;">发生条件与发生规律:</label>
+            <span style="width:360px;" >{{list.law}}</span>
+            <label v-if="list.prevention!=''" class="block mt5 mb5 ml5" style="font-size:20px;color:#008000;line-height:40px;">最佳防治期:</label>
+            <span style="width:360px;" >{{list.prevention}}</span>
+            <label v-if="list.measure!=''" class="block mt5 mb5 ml5" style="font-size:20px;color:#008000;line-height:40px;">防治措施:</label>
+            <span style="width:360px;">{{list.measure}}</span>
+            <label v-if="list.skill!=''" class="block mt5 mb5 ml5" style="font-size:20px;color:#008000;line-height:40px;">用药技巧:</label>
+            <span style="width:360px;" >{{list.skill}}</span>
+        </div>
+</script>
+<script id="searchlist_template" type="text/v-template"> 
+ <ul>
+     <li v-for="item in list" v-on:click="ajaxDetail(item.id)">{{item.crop}}-{{item.pest}}<li>
+ </ul> 
+</script>
+<script type="text/javascript">
+    (function (Vue) {
+
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+        var sl = '';
+        var App = Vue.extend({})
+
+        var Search = Vue.extend({
+            template: loadTemplate('search'),
+            data: function () {
+                return {
+                    word: '',
+                    message: ''
+                }
+            },
+            methods: {
+                home: function () {
+                    this.message = '';
+                    router.go("/search");
+                },
+                ajaxSearch: function () {
+                    var vm = this;
+                    vm.message = '';
+                    this.$http.post('__KNOWLEDGE_CONTROL__/index/ajaxSearch',
+                        { params: JSON.stringify({ word: vm.word }) }).then((response) => {
+                            var msg = response.data.msg;
+                            var da = response.data.data;
+                            var data = JSON.stringify(da);
+                            if (msg == 'category') {
+                                router.go("/search/searchlist/" + data);
+                            }
+                            if (msg == 'detail') {
+                                router.go("/search/detail/" + da.id);
+                            }
+                        })
+                }
+
+            }
+        })
+
+        var List = Vue.extend({
+            template: loadTemplate('list'),
+            data: function () {
+                this.ajaxQuery();
+                return {
+                    list: {}
+
+                }
+            }, methods: {
+                ajaxQuery: function () {
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/index/ajaxCategory').then((response) => {
+                        vm.list = response.data.data;
+                        // console.info(response.data.data);
+                    })
+                }
+            }
+
+        })
+        var Pest = Vue.extend({
+            template: loadTemplate('pest'),
+            data: function () {
+                return {
+                    list: {},
+                    id: ''
+
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.id = transition.to.params.id;
+                    this.ajaxSubCategory();
+                }
+            },
+            methods: {
+                ajaxSubCategory: function () {
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/index/ajaxSubCategory',
+                        { params: JSON.stringify({ id: vm.id }) }).then((response) => {
+                            vm.list = response.data.data;
+                        })
+                }
+            }
+
+        })
+        var Detail = Vue.extend({
+            template: loadTemplate('detail'),
+            data: function () {
+                return {
+                    list: {},
+                    id: '',
+                    i: "0",
+                    pic: [],
+                    now: '',
+                    arr: [1, 2, 3, 4, 5, 6]
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.id = transition.to.params.id;
+                    this.ajaxDetail();
+                }
+            },
+            methods: {
+                ajaxDetail: function () {
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/index/ajaxDetail',
+                        { params: JSON.stringify({ id: vm.id }) }).then((response) => {
+                            var image = function () {
+                                return new Promise(function (resolve, reject) {
+                                    vm.list = response.data;
+                                    vm.pic = vm.list.images;
+                                    resolve('ok');
+                                })
+                            }
+                            image().then((e) => {
+                                new LnSlider('.wrapper', {
+                                    prev: '.prev',
+                                    next: '.next',
+                                    autoplay: true,
+                                    effect: 'slide',
+                                    dot: true,
+                                    dotHover: true,
+                                    dotFloat: 'center'
+                                })
+                            });
+                        })
+                }
+            }
+
+        })
+        var Searchlist = Vue.extend({
+            template: loadTemplate('searchlist'),
+            data: function () {
+
+                return {
+                    list: {}
+
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.list = JSON.parse(transition.to.params.data);
+                }
+            },
+            methods: {
+                ajaxDetail: function (id) {
+                    router.go("/search/detail/" + id);
+                }
+            }
+
+        })
+        var router = new VueRouter()
+
+        router.map({
+
+            '/search': {
+                name: 'search',
+                component: Search,
+                subRoutes: {
+                    '/list': {
+                        name: 'list',
+                        component: List
+                    },
+                    '/pest/:id': {
+                        name: 'pest',
+                        component: Pest
+                    },
+                    '/detail/:id': {
+                        name: 'detail',
+                        component: Detail
+                    },
+                    '/searchlist/:data': {
+                        name: 'searchlist',
+                        component: Searchlist
+                    },
+                    '': {
+                        name: 'list',
+                        component: List
+                    }
+                }
+            }
+        })
+
+        router.redirect({
+            '/': '/search'
+        })
+
+        router.start(App, '#app')
+
+
+    })(Vue) 
+</script>
+</body>
+
+</html>

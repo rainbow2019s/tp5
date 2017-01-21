@@ -1,0 +1,674 @@
+{layout name='layout' /}
+
+<section>
+    <router-view></router-view>
+</section>
+
+<script id="tree_template" type="text/v-template">
+
+    <div style="width: 300px;float: left; ">
+    <ul>
+        <li v-for="tree in treelist">
+            <span v-if='tree.depth==0' v-on:click="query(tree.id)" style='margin-left:0px'>{{tree.name}}</span>
+            <span v-if='tree.depth==1' v-on:click="query(tree.id)" style='margin-left:16px'>{{tree.name}}</span>
+            <span v-if='tree.depth==2' v-on:click="query(tree.id)" style='margin-left:32px'>{{tree.name}}</span>
+            <span v-if='tree.depth==3' style='margin-left:48px'>{{tree.name}}</span>
+            <a v-link="{name:'add',params:{id:tree.id,depth:tree.depth}}" v-if='tree.depth!=3' style="font-size:9pt">新增</a>
+            <a v-link="{name:'edit',params:{id:tree.id,depth:tree.depth}}" v-if='tree.depth>0' style="font-size:9pt">更新</a>
+            <span v-on:click="remove(tree.id)" v-if='tree.depth>0' style="font-size:9pt">删除</span>            
+        </li>
+    </ul>
+    </div>
+
+    <div style="float: left;">
+        <p @transfer="query">{{pathinfo}}</p>
+        <router-view></router-view>
+    </div> 
+</script>
+
+<script id="add_template" type="text/v-template">
+
+    <form @submit.prevent="submit"> 
+        <p v-show="depth==1">
+            <label class="block mt5 mb5 ml5">农作物分类:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">学术类:</label>
+            <input type="text" v-model='category.academic'/> 
+        </p>
+        <p v-show="depth==2">
+            <label class="block mt5 mb5 ml5">农作物品种:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">俗称:</label>
+            <input type="text" v-model='category.popular'/> 
+        </p>
+        <p v-show="depth==3">
+           <label class="block mt5 mb5 ml5">病虫名称:</label>
+           <input type="text" v-model='category.name'/>
+           <label class="block mt5 mb5 ml5">图片(2张):</label>
+           <input type="file"  id="file" multiple="multiple"/> 
+           <!--<input v-show="category.img_url_1=='' && category.img_url_2==''" type="file"  id="file" multiple="multiple"/> 
+           <img v-show="category.img_url_1!='' " v-bind:src="category.img_url_1" track-by="$index" class="mr5" />
+           <img v-show="category.img_url_2!='' " v-bind:src="category.img_url_2" track-by="$index" class="mr5" />-->
+        </p>
+        <input type="submit" value="提交" class="mt5"/><br/> 
+        <p>{{message}}</p>
+   </form>
+
+</script>
+
+<script id="edit_template" type="text/v-template">
+
+   <form @submit.prevent="submit"> 
+        <p v-show="depth==1">
+            <label class="block mt5 mb5 ml5">农作物分类:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">学术类:</label>
+            <input type="text" v-model='category.academic'/> 
+        </p>
+        <p v-show="depth==2">
+            <label class="block mt5 mb5 ml5">农作物品种:</label>
+            <input type="text" v-model='category.name'/>
+            <label class="block mt5 mb5 ml5">俗称:</label>
+            <input type="text" v-model='category.popular'/> 
+        </p>
+        <p v-show="depth==3">
+           <label class="block mt5 mb5 ml5">病虫名称:</label>
+           <input type="text" v-model='category.name'/>
+            <label v-show="category.img_url_1!=''" class="block mt5 mb5 ml5">图片:<a v-on:click="clear">删除</a><br/>
+            <img v-bind:src="category.img_url_1"></img>
+            <img v-bind:src="category.img_url_2"></img></label>
+           <label v-show="category.img_url_1==''" class="block mt5 mb5 ml5">图片(2张):
+           <input type="file"  id="file" multiple="multiple"/> </label>
+        </p>
+        <input type="submit" value="提交" class="mt5"/><br/> 
+        <p>{{message}}</p>
+   </form>
+
+</script>
+
+
+<script type="text/javascript">
+    (function (Vue) {
+
+        var loadTemplate = function (name) {
+            return document.getElementById(name + "_template").innerHTML;
+        }
+
+        var node_id = -1;
+
+        var App = Vue.extend({})
+
+        var Tree = Vue.extend({
+            template: loadTemplate('tree'),
+            data: function () {
+                this.refresh();
+                return {
+                    treelist: [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }],
+                    tree: {
+                        id: 0,
+                        name: "农作物",
+                        parent_id: 0,
+                        depth: 0,
+                        expand: false,
+                        children: []
+                    },
+                    node: {},
+                    pathinfo: '农作物'
+
+
+                }
+            },
+            methods: {
+                query: function (id, status = false) {
+
+                    this.find(this.tree.children, id);
+                    this.node.expand = !this.node.expand;
+                    this.pathinfo = this.path(id);
+
+                    // 剪枝操作
+                    if (!this.node.expand) {
+                        this.node.children = [];
+                        this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0 }];
+                        this.traverse(this.tree.children);
+                        return;
+                    }
+
+                    if (!status) {
+                        if (this.node.depth == 3 || this.node.children.length > 0) {
+                            return;
+                        }
+                    }
+
+                    this.ajaxQuery();
+                },
+                ajaxQuery: function () {
+
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxQuery',
+                        { params: JSON.stringify({ parent_id: this.node.id }) }).then((response) => {
+                            // 生成树
+                            this.node.children = [];
+                            for (var element of response.data.data) {
+                                this.node.children.push(
+                                    {
+                                        id: element.id, name: element.name, parent_id: element.parent_id,
+                                        depth: element.depth, expand: false, children: []
+                                    });
+                            }
+
+                            this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0, expand: false }];
+                            this.traverse(this.tree.children);
+
+                        })
+                },
+                ajaxRemove: function () {
+                    if (confirm("你确定要删除吗？")) {
+                        var vm = this;
+                        vm.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxRemove',
+                            { params: JSON.stringify({ id: vm.node.id }) }).then((response) => {
+                                //this.ajaxQuery(parent_id, 1);
+                                if (response.data.result == 'success') {
+                                    // 剪枝操作
+                                    //vm.node.childer=[];
+                                    var id = vm.node.id;
+                                    vm.find(vm.tree.children, vm.node.parent_id);
+                                    var children = [];
+                                    for (var element of vm.node.children) {
+                                        if (element.id != id) {
+                                            children.push(element);
+
+                                        }
+                                    }
+
+                                    vm.node.children = children;
+
+                                    this.treelist = [{ id: 0, name: '农作物', parent_id: 0, depth: 0, expand: false }];
+                                    this.traverse(this.tree.children);
+                                }
+                            })
+                        //}
+
+                    }
+                },
+
+                remove: function (id) {
+
+                    this.find(this.tree.children, id);
+                    if (this.node.children.length > 0) {
+                        alert('请先删除子节点');
+                        return;
+                    }
+
+                    this.ajaxRemove();
+
+                },
+
+                refresh: function () {
+                    var vm = this;
+                    window.setInterval(function () {
+                        //console.log(node_id);
+                        if (node_id != -1) {
+                            vm.query(node_id, true);
+                            //console.log(node_id);
+                            node_id = -1;
+                        }
+                    }, 500);
+                },
+                path: function (id) {
+
+                    var depth = this.node.depth;
+                    var info = [];
+
+                    while (depth >= 0) {
+                        for (var element of this.treelist) {
+                            if (element.id == id) {
+                                info.unshift(element.name);
+                                id = element.parent_id;
+                                depth--;
+                            }
+                        }
+                    }
+
+                    return info.join('/');
+
+                },
+
+                // 查找指定id的结点
+                find: function (children, id) {
+
+                    if (id == 0) {
+                        this.node = this.tree;
+                    }
+
+                    for (var element of children) {
+                        if (element.id == id) {
+                            this.node = element;
+                            return;
+                        }
+
+                        if (element.children.length > 0) {
+                            this.find(element.children, id);
+                        }
+
+                    }
+
+                },
+                // 遍历树型结点 转换为一维数组
+                traverse: function (children) {
+
+                    for (var element of children) {
+                        this.treelist.push({
+                            id: element.id, name: element.name, parent_id: element.parent_id,
+                            depth: element.depth
+                        });
+
+                        if (element.children.length > 0) {
+                            this.traverse(element.children);
+                        }
+                    }
+                }
+                // ,
+                // route: {
+                //     data: function (transition) {
+                //         console.log(transition);
+                //         console.log('1233');
+                //         //var vm = this;
+                //         //vm.category.parent_id = transition.to.params.id;
+                //         //vm.depth = parseInt(transition.to.params.depth) + 1;
+                //         //vm.category.depth = vm.depth;
+                //         // console.log(parent_id);
+                //         // console.log(vm.depth);
+                //     }
+                // }
+            }
+        })
+
+        var Add = Vue.extend({
+            template: loadTemplate('add'),
+            data: function () {
+
+                return {
+                    depth: 1,
+                    category: { id: '', name: '', academic: '', popular: '', img_url_1: '', img_url_2: '', parent_id: '', depth: '' },
+                    message: ''
+                }
+            },
+            methods: {
+                submit: function (event) {
+                    this.message = '';
+                    switch (this.depth) {
+                        case 1:
+                            this.ajaxFirstLevelAdd();
+                            break;
+                        case 2:
+                            this.ajaxSecondLevelAdd();
+                            break;
+                        case 3:
+                            this.ajaxThirdLevelAdd();
+                            break;
+                    }
+                },
+                ajaxFirstLevelAdd: function () {
+                    var vm = this;
+                    if (vm.category.name == '') {
+                        vm.message = '农作物分类不能为空';
+                        return;
+                    }
+
+                    if (vm.category.academic == '') {
+                        vm.message = '学术类不能为空！';
+                        return;
+                    }
+                    if (confirm("你确定要新增农作物分类吗？")) {
+
+                        vm.ajaxAdd();
+                        return;
+                    }
+                },
+                ajaxSecondLevelAdd: function () {
+                    var vm = this;
+
+                    if (vm.category.name == '') {
+                        vm.message = '农作物品种不能为空';
+                        return;
+                    }
+
+                    if (vm.category.popular == '') {
+                        vm.message = '俗称不能为空！';
+                        return;
+                    }
+
+                    if (confirm("你确定要新增农作物品种吗？")) {
+
+                        vm.ajaxAdd();
+                        return;
+                    }
+
+
+                },
+                ajaxThirdLevelAdd: function () {
+                    var vm = this;
+                    if (vm.category.name == '') {
+                        vm.message = '病虫不能为空';
+                        return;
+                    }
+
+                    var imageFiles = document.getElementById('file').files;
+                    if (imageFiles.length != 2) {
+                        vm.message = '请上传2张图片';
+                        return;
+                    }
+
+                    if (confirm("你确定要新增病虫吗？")) {
+
+                        var images = [];
+
+                        var promises = [];
+
+                        var image = function (url) {
+                            return new Promise(function (resolve, reject) {
+                                var reader = new FileReader();
+                                reader.readAsDataURL(url);
+                                reader.onload = resolve;
+                                reader.onerror = reject;
+                            })
+                        };
+
+                        var promises = [0, 1].map(function (id) {
+                            return image(imageFiles[id]).then((e) => { images.push(e.target.result) });
+                        });
+
+                        Promise.all(promises).then(function (e) {
+                            vm.category.img_url_1 = images[0];
+                            vm.category.img_url_2 = images[1];
+                            vm.ajaxAdd();
+                        });
+
+                        // var promises=[];
+
+                        // var image = function (url) {
+                        //     return new Promise(function (resolve, reject) {
+                        //         var reader = new FileReader();
+                        //         reader.readAsDataURL(url);
+                        //         reader.onload = resolve;
+                        //         reader.onerror = reject;
+                        //     })
+                        // };
+
+                        // var promises = imageFiles.map(function (url) {
+                        //     return image(url);
+                        // });
+
+                        // Promise.all(promises).then(function (e) {
+                        //     images.push(e.target.result);
+                        //     if (images.length == 2) {
+                        //         vm.category.img_url_1 = images[0];
+                        //         vm.category.img_url_2 = images[1];
+                        //         vm.ajaxAdd();
+                        //     }
+                        // });
+
+                        // for (var i = 0; i < imageFiles.length; i++) {
+                        //     // 创建一个FileReader对象
+                        //     var reader = new FileReader();
+                        //     // 读取File对象的数据
+                        //     reader.readAsDataURL(imageFiles[i]);
+                        //     // 绑定load事件
+                        //     reader.onload = function (e) {
+                        //         images.push(e.target.result);
+                        //     }
+
+
+                        // }
+                        // window.setTimeout(function () {
+
+                        //     vm.category.img_url_1 = images[0];
+                        //     vm.category.img_url_2 = images[1];
+                        //     vm.ajaxAdd();
+
+                        // }, 5000)
+
+                        return;
+                    }
+                },
+                ajaxAdd: function () {
+                    var parent_id = this.category.parent_id;
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxAdd',
+                        { params: JSON.stringify(this.category) })
+                        .then((response) => {
+                            //console.log(response.data);
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+
+                            this.message = response.data.msg;
+
+                            // vm.category = {
+                            //     id: '', name: '', academic: '', popular: '', img_url_1: '', img_url_2: ''
+                            //     //parent_id: '', depth: ''
+                            // };
+                            vm.category.name = '';
+                            vm.category.academic = '';
+                            vm.category.popular = '';
+                            vm.category.img_url_1 = '';
+                            vm.category.img_url_2 = '';
+
+                            node_id = parent_id;
+
+                        });
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.category.parent_id = transition.to.params.id;
+                    vm.depth = parseInt(transition.to.params.depth) + 1;
+                    vm.category.depth = vm.depth;
+                    // console.log(parent_id);
+                    // console.log(vm.depth);
+                }
+            }
+        })
+
+        var Edit = Vue.extend({
+            template: loadTemplate('edit'),
+            data: function () {
+                return {
+                    depth: 1,
+                    category: { id: '', name: '', academic: '', popular: '', img_url_1: '', img_url_2: '', parent_id: '', depth: '', changed: false },
+                    message: ''
+                }
+            },
+            route: {
+                data: function (transition) {
+                    var vm = this;
+                    vm.category.id = transition.to.params.id;
+                    vm.depth = transition.to.params.depth;
+                    vm.category.depth = vm.depth;
+                    vm.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxElement', { params: JSON.stringify(vm.category) }).then((response) => {
+                        vm.category = response.data.data;
+                        vm.category.changed = false;
+                    });
+                }
+            },
+            methods: {
+                submit: function (event) {
+                    this.message = '';
+                    switch (parseInt(this.depth)) {
+                        case 1:
+                            this.ajaxFirstLevelEdit();
+                            break;
+                        case 2:
+                            this.ajaxSecondLevelEdit();
+                            break;
+                        case 3:
+                            this.ajaxThirdLevelEdit();
+                            break;
+                    }
+                },
+                ajaxFirstLevelEdit: function () {
+                    var vm = this;
+                    if (vm.category.name == '') {
+                        vm.message = '农作物分类不能为空';
+                        return;
+                    }
+
+                    if (vm.category.academic == '') {
+                        vm.message = '学术类不能为空！';
+                        return;
+                    }
+                    if (confirm("你确定要更新农作物分类吗？")) {
+
+                        vm.ajaxEdit(vm.category);
+                        return;
+                    }
+                },
+                ajaxSecondLevelEdit: function () {
+                    var vm = this;
+                    if (vm.category.name == '') {
+                        vm.message = '农作物品种不能为空';
+                        return;
+                    }
+
+                    if (vm.category.popular == '') {
+                        vm.message = '俗称不能为空！';
+                        return;
+                    }
+                    if (confirm("你确定要更新农作物分类吗？")) {
+
+                        vm.ajaxEdit();
+
+                        return;
+                    }
+                },
+                ajaxThirdLevelEdit: function () {
+                    var vm = this;
+                    if (vm.category.name == '') {
+                        vm.message = '病虫不能为空';
+                        return;
+                    }
+                    var imageFiles = document.getElementById('file').files;
+                    if (vm.category.changed) {
+                        if (imageFiles.length != 2) {
+                            vm.message = '请上传2张图片';
+                            return;
+                        }
+                    }
+
+
+                    if (confirm("你确定要更新病虫吗？")) { 
+                        //判断图片是否更改
+                        if (vm.category.changed) {
+                            var images = [];
+                            var promises = [];
+
+                            var image = function (url) {
+                                return new Promise(function (resolve, reject) {
+                                    var reader = new FileReader();
+                                    reader.readAsDataURL(url);
+                                    reader.onload = resolve;
+                                    reader.onerror = reject;
+                                })
+                            };
+
+                            var promises = [0, 1].map(function (id) {
+                                return image(imageFiles[id]).then((e) => { images.push(e.target.result) });
+                            });
+
+                            Promise.all(promises).then(function (e) {
+                                vm.category.img_url_1 = images[0];
+                                vm.category.img_url_2 = images[1];
+                                vm.ajaxEdit();
+                            });
+                        } else {
+                            vm.ajaxEdit();
+                        }
+                        // for (var i = 0; i < imageFiles.length; i++) {
+                        //     // 创建一个FileReader对象
+                        //     var reader = new FileReader();
+                        //     // 读取File对象的数据
+                        //     reader.readAsDataURL(imageFiles[i]);
+                        //     // 绑定load事件
+                        //     reader.onload = function (e) {
+                        //         images.push(e.target.result);
+                        //     }
+                        // }
+
+                        // window.setTimeout(function () {
+
+                        //     vm.category.img_url_1 = images[0];
+                        //     vm.category.img_url_2 = images[1];
+
+                        //     vm.ajaxEdit();
+
+                        // }, imageFiles.length * 5000)
+
+                        return;
+                    }
+                },
+                ajaxEdit: function () {
+                    var parent_id = this.category.parent_id;
+                    var vm = this;
+                    this.$http.post('__KNOWLEDGE_CONTROL__/category/ajaxEdit',
+                        { params: JSON.stringify(this.category) })
+                        .then((response) => {
+                            if (response.data.result == 'error') {
+                                this.message = response.data.msg;
+                                return;
+                            }
+                            this.message = response.data.msg;
+
+                            // vm.category.name = '';
+                            // vm.category.academic = '';
+                            // vm.category.popular = '';
+                            // vm.category.img_url_1 = '';
+                            // vm.category.img_url_2 = '';                            
+                            // node_id = parent_id;
+
+                        });
+                },
+                clear: function () {
+                    if (confirm("你确定要更换图片吗？")) {
+                        this.category.img_url_1 = '';
+                        this.category.img_url_2 = '';
+                        this.category.changed = true;
+                    }
+                }
+            }
+        })
+
+        var router = new VueRouter()
+
+        router.map({
+
+            '/tree/:id/:depth': {
+                name: 'tree',
+                component: Tree,
+                subRoutes: {
+                    '/add': {
+                        name: 'add',
+                        component: Add
+                    },
+                    '/edit': {
+                        name: 'edit',
+                        component: Edit
+                    },
+                    '': {
+                        name: 'add',
+                        component: Add
+                    }
+                }
+            }
+        })
+
+        router.redirect({
+            '/': '/tree/0/0'
+        })
+
+        router.start(App, '#app')
+
+
+    })(Vue)
+
+</script>

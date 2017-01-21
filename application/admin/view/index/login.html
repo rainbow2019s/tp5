@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ecopro admin login</title>
+    <style type="text/css">
+    #login{
+        width: 1190px; margin:0 auto; position: relative;
+    }
+    .block{
+            display: block;
+    }
+    .w250{width:250px;}
+    .mt5{margin-top: 5px;}
+    .mb5{margin-bottom: 5px;}
+    .w150{width: 150px;}
+    .mr5{margin-right: 5px;}
+    .ml5{margin-left: 5px;}
+  </style>
+<script src="__COMMON__/vue-1.0.26/vue.js"></script>
+<script src="__COMMON__/vue-router-0.7.13/vue-router.js"></script>
+<script src="__COMMON__/vue-resource-1.0.3/vue-resource.js"></script>
+</head>
+
+<body>
+    <div id='app' style="left:600px; top:100px;position: absolute;width:300px; border: 1px solid #000;">
+<form @submit.prevent="submit">
+    <label class="block mt5 mb5 ml5">用户帐号:</label>
+    <input type="text" v-model='user.username' class="w250 ml5" />
+    <label class="block mt5 mb5 ml5">用户密码:</label>
+    <input type="password" v-model='user.password' class="w250 ml5" />
+    <label class="block mt5 mb5 ml5">验证码：</label>
+    <input type="text" v-model='user.captcha' class="w150 ml5" />
+    <img src="{:captcha_src()}" alt="captcha" onclick="this.src=this.src+'?'" style="cursor:pointer"/> </br>
+<input type="submit" value="提交" class="mt5 ml5 mb5" />
+<a href="#">密码重置</a>
+
+<p>{{message}}</p>
+
+</form>
+</div>
+
+<script type="text/javascript"> 
+    new Vue({
+        el: '#app',
+        data: {
+            user: { username: '', password: '', captcha: '' },
+            message: ''
+        },
+        methods: {
+            submit: function (event) {
+
+                var vm = this;
+
+                if (vm.user.username == '') {
+                    vm.message = '用户账户不能为空';
+                    return;
+                }
+
+                if (vm.user.password == '') {
+                    vm.message = '密码不能为空！';
+                    return;
+                }
+
+                if (vm.user.captcha == '') {
+                    vm.message = '验证码不能为空！';
+                    return;
+                }
+
+                vm.message = '';
+
+                vm.$http.post('__ADMIN_CONTROL__/index/ajaxlogin',
+                    { params: JSON.stringify(vm.user) })
+                    .then((response) => {
+                        //console.log(response.data);
+                        if (response.data.result == 'error') {
+                             vm.message = response.data.msg;
+                             return;
+                        }
+                        window.location.href = response.data.data;
+                        //console.log(response.data);
+
+                    });
+
+                return;
+            }
+        }
+    })
+
+</script>
+</body>
+
+</html>
