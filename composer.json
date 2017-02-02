@@ -25,6 +25,7 @@
         "tanghao2018/phpexcel":">=1.8.1",
         "tanghao2018/hattedcode":">=1.0",
         "tanghao2018/email":">=1.0.0",
+        "tanghao2018/encryption":">=1.0.0",
         "endroid/qrcode":">=1.7.4",
         "topthink/think-captcha": "^1.0"
      
