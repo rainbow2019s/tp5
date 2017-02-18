@@ -35,7 +35,19 @@ class Activity extends Controller
     {
         $user=Session::get('user');
         $this->assign('user',$user);
+        $menu=[];
+        $subMenu=SubMenu::getMenu('platform'); 
+        foreach($subMenu['submenu'] as $m ){  
+   
+             $active='no_hover';
+            if($m['name']=='应用管理'){
+                 $active='hover';
+            }
+           $menu[]=$active;
+            
+        } 
         $this->assign('menu',SubMenu::getMenu('platform'));
+        $this->assign('active',$menu);
 
         return view();
     }

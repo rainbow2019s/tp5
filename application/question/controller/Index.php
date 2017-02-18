@@ -1,10 +1,151 @@
 <?php
 namespace app\question\controller;
 
-class Index
+use think\Controller;
+use think\View;
+use think\Session;
+use think\Request;
+
+//use app\admin\model\User as UserModel;
+use app\question\model\Questionlist as QuestionlistModel;
+use app\question\model\Whitelist as WhitelistModel;
+use app\question\model\Index as IndexModel;
+use ecopro\AjaxOutput;
+//use ecopro\SubMenu;
+
+class Index extends Controller
 {
+    private $_whitelist='';
+    private $_questionlist='';
+    private $_index='';
+
+    public function __construct(QuestionlistModel $questionlistModel,WhitelistModel $whitelistModel,IndexModel $indexModel)
+    {
+        parent::__construct();
+        //$this->_user=$userModel;
+        $this->_whitelist=$whitelistModel;
+        $this->_questionlist=$questionlistModel;
+        $this->_index=$indexModel;
+    }
+
+
+
     public function index()
     {
-        return '<style type="text/css">*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} a{color:#2E5CD5;cursor: pointer;text-decoration: none} a:hover{text-decoration:underline; } body{ background: #fff; font-family: "Century Gothic","Microsoft yahei"; color: #333;font-size:18px;} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.6em; font-size: 42px }</style><div style="padding: 24px 48px;"> <h1>:)</h1><p> ThinkPHP V5<br/><span style="font-size:30px">十年磨一剑 - 为API开发设计的高性能框架</span></p><span style="font-size:22px;">[ V5.0 版本由 <a href="http://www.qiniu.com" target="qiniu">七牛云</a> 独家赞助发布 ]</span></div><script type="text/javascript" src="http://tajs.qq.com/stats?sId=9347272" charset="UTF-8"></script><script type="text/javascript" src="http://ad.topthink.com/Public/static/client.js"></script><thinkad id="ad_bd568ce7058a1091"></thinkad>';
+
+        $form=input('userinfo');
+        $userInfo=json_decode($form);
+
+        $userInfo->identity=$this->_index->getUserIdentity($userInfo);
+        if(empty($userInfo->identity)){
+            $userInfo->identity='访客';
+        }
+
+        Session::set('userInfo',$userInfo);
+
+        return view();
     }
+
+    public function ajaxUserInfo()
+    {
+        $userInfo=Session::pull('userInfo');
+        return AjaxOutput::success('',$userInfo);
+    }
+
+
+    public function ajaxFrontQuestionlist()
+    {
+        $frontQuestionlist=$this->_questionlist->ajaxFrontQuestionlist();
+        return AjaxOutput::success('',$frontQuestionlist);
+    }
+
+    public function ajaxFrontQuestionChild()
+    {
+        $form=input('params');
+        $question=json_decode($form);
+
+
+        $result=$this->_questionlist->ajaxFrontQuestionChild($question);
+        //$questions=AjaxOutput::toObject($result);
+        $questions=[];
+        foreach($result as $item){
+            $issue=AjaxOutput::toObject($item);
+            $issue->images=[];
+            $images=$this->_questionlist->ajaxFrontQuestionResource($issue->id);
+            foreach($images as $image){
+                $imagePath=substr(ROOT_PATH,0,-1).$image['file_name'];
+                $issue->images[]=file_get_contents($imagePath);
+            }
+            $questions[]=$issue;
+        }
+
+        return AjaxOutput::success('',$questions);
+    }
+
+
+
+    public function ajaxFrontBindExpert()
+    {
+        $form=input('params');
+        $expert=json_decode($form);
+
+        $rows=$this->_whitelist->ajaxFrontBindExpert($expert);
+
+        return $rows>0?Json(AjaxOutput::success('专家绑定成功')):Json(AjaxOutput::error('专家绑定失败'));
+    }
+
+
+    /**
+     * 发贴 
+     *
+     * $title,$content,$images[],$headImageurl,$weixin,$identity
+     *
+     */
+    public function ajaxFrontQuestionSubmit()
+    {
+        
+
+        $form=input('params');
+        $question=json_decode($form);
+
+        $insertId=$this->_questionlist-> ajaxFrontQuestionSubmit($question);
+
+        $gallery=new \stdClass;
+        $gallery->question_id=$insertId;
+        $gallery->file_name='';
+
+
+
+        foreach($question->images as $image){
+            $code=uniqid();
+            $file_path='public'.DS.'uploads'.DS.'question'.DS.date('Ymd');
+            $path=substr(ROOT_PATH,0,-1).DS.$file_path;
+            
+            $gallery->file_name=DS.$file_path.DS.$code;
+            $this->_questionlist-> ajaxFrontGallery($gallery);
+
+            if(!is_dir($path){
+                mkdir($path);
+            }
+            
+            file_put_contents($path.DS.$code,$image);
+        }
+
+        // 查找敏感词
+        $sensitive=substr(ROOT_PATH,0,-1).DS."public".DS."uploads".DS."question".DS."sensitive.txt";
+        $text=file_get_contents($sensitive);
+        $words=mb_split(',',$text);
+        foreach($words as $word){
+            echo $word."<br/>";
+            if(mb_strpos($word,$question->title)!==false || mb_strpos($word,$question->content!==false)){
+                // 存在敏感词
+                $this->_questionlist-> ajaxFrontSensitive($gallery);
+                break;             
+            }
+        }
+
+
+        return Json(AjaxOutput::success('发贴成功'));
+    }
+
 }

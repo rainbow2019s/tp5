@@ -88,4 +88,14 @@ class Whitelist extends Model
     {
         return Db::execute('delete from qa_white_list where id=?',[$id]);
     }
+
+
+    // ------------------------------------------------------
+    // 微信前台
+    // ------------------------------------------------------
+    public function ajaxFrontBindExpert($expert)
+    {
+        return Db::execute('update qa_white_list set weixin=? where phone=?',
+            [$expert->weixin,$expert->phone]);
+    }
 }

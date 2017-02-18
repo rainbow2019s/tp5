@@ -102,4 +102,58 @@ class Questionlist extends Model
     }
 
 
+    // -----------------------------------------------------
+    // 微信前台请求
+    // -----------------------------------------------------
+    public function ajaxFrontQuestionlist()
+    {
+        return Db::query('select id,title,create_time,nickname,head_img_url 
+            from qa_question_list where is_audit=true and is_white=true and is_sensitive=false and parent_id=0
+              order by id desc');
+    }
+
+    public function ajaxFrontQuestionChild($question)
+    {
+        return Db::query(
+            'select id,title,content from qa_question_list where id=:id or parent_id=:parent_id',
+             ['id'=>$question->id,'parent_id'=>$question->id]
+        );
+    }
+
+    public function ajaxFrontQuestionResource($id)
+    {
+        return Db::query(
+            'select file_name from qa_refence_gallery where question_id=?',[$id]
+        );
+    }
+
+    // 发贴
+    public function ajaxFrontQuestionSubmit($question)
+    {
+        $rows= Db::execute("insert into qa_question_list(title,content,weixin,parent_id,create_time,
+            nickname,head_img_url,identity,is_audit,is_white,is_sensitive) values(:title,:content,:weixin,:parent_id,now(),
+            :nickname,:head_img_url,:identity,false,false,false)",
+            ['title'=>$question->title,
+                'content'=>$question->content,
+                'weixin'=>$question->weixin,
+                'parent_id'=>$question->parent_id,
+                //'create_time'=>now(),
+                'nickname'=>$question->nickname,
+                'head_img_url'=>$question->head_img_url,
+                'identity'=>$question->identity]);
+
+        return $rows>0?Db::getLastInsID():0;
+
+    }
+
+    public function ajaxFrontSensitive($gallery)
+    {
+        return Db::execute('update qa_question_list set is_sensitive=true where id=?',[$gallery->question_id]);
+    }
+
+    public function ajaxFrontGallery($gallery)
+    {
+        return Db::execute('insert into qa_refence_gallery(file_name,question_id) values(?,?)',
+            [$gallery->file_name,$gallery->question_id]);
+    }
 }

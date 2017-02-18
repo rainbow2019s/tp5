@@ -51,12 +51,12 @@ class User extends Model
      *
      */
     
-    public function ajaxQueryAllUsers()
+    public function ajaxQueryAllUsers($user)
     {
         return Db::query('select @rowid:=@rowid+1 as rowid,id,name,register,phone,
-                        email,is_super 
+                        email,is_super,if(id=?,1,0) as status 
                             from ep_admin_users,(select @rowid:=0) as init 
-                            where is_enabled=true');
+                            where is_enabled=true',[$user->id]);
     }
 
     

@@ -254,11 +254,11 @@ return [
         //'codeSet' => '2345678abcdefhijkmnpqrstuvwxyzABCDEFGHJKLMNPQRTUVWXY',
         'codeSet' => '2345678',
         // 验证码字体大小(px)
-        'fontSize' => 14,
+        'fontSize' => 13,
         // 是否画混淆曲线
         'useCurve' => false,
         // 验证码图片高度
-        'imageH' => 36,
+        'imageH' => 34,
         // 验证码图片宽度
         'imageW' => 100,
         // 验证码位数

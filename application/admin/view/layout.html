@@ -5,12 +5,20 @@
   <meta charset="UTF-8">
   <title>ecopro 后台配置主页</title>
   <style type="text/css">
-    #header,#content,#foot{
-        width: 1190px; margin:0 auto; 
+    
+     body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, button, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+  }
+ body {
+    font-family: "Microsoft YaHei", Arial, Helvetica, sans-serif, "宋体";
+    font-size: 14px;
+  }
+#login,#header,#content,#foot{
+        width: 1200px; margin:0 auto; 
     }
-    .block{
-            display: block;
-    }
+    .block{display: block; }
+    .ib{display: inline-block; }
     .pr{position: relative;}
     .w250{width:250px;}
     .mt5{margin-top: 5px;}
@@ -19,8 +27,30 @@
     .mr5{margin-right: 5px;}
     .ml5{margin-left: 5px;}
     .cp{cursor: pointer;}
+    .tc{text-align: center;}
+    .vm{vertical-align: middle;}
     li{list-style: none;cursor: pointer;line-height: 30px;}
-    .color-lightgray{color:lightgray}
+    .color-lightgray{color:lightgray;}
+    .bold{font-weight: bold;}
+    .f14{font-size: 14px;}
+    .f16{font-size: 16px;}
+    .f21{font-size: 21px;} 
+    .black{color: #000000;}
+    .white{color: white;}
+    .hover{background-color: #e3eee5;}
+    a.hover{color: #66a36c;}
+    .no-hover{background-color: #ffffff;} 
+    a{color: #000000;} 
+    /*a:webkit-any-link{display:block;}*/
+    .table{font-size: 12px; border-collapse:collapse;}
+    .table thead tr {border-bottom:1px solid #cccccc;}
+    .table tr{height: 56px;line-height: 56px;border-bottom:1px solid #cccccc;}
+    .table tr td:first-child{padding-left: 30px;}
+    .table tr td{padding-left: 20px;}
+    .table tr td:last-child{padding-left: 0;padding-right: 32px;}
+    .l6{color: #66a36c;}
+    a{text-decoration:none;}
+    
   </style>
 
 <script src="__COMMON__/vue-1.0.26/vue.js"></script>
@@ -31,35 +61,57 @@
 </head>
 
 <body>
-  <div id="header" class="pr" style=" background:#80bf57  no-repeat left center;height: 50px;">
-<div id="head_info" style="text-align: right;color: white;font-size: 12px;">
-<p class="mr5">{$user->name}</p>
-<p class="mr5" style="cursor: pointer">
-<span id="modifyPa" class="ib cp"><a href='__ADMIN_CONTROL__/auth/reset'>修改密码</a></span>
-<!--<span id="exit" class="ib ml5 cp">退出</span>-->
-<a href='__ADMIN_CONTROL__/auth/logout'>退出</a>
-</p>
-</div>
-</div>
-<div id="content" class="pr">
-  <div id="menu" style="height: 550px; float: left;width: 220px;background-color: yellow;">
-<h5>{$menu.name}</h5>
-<ul>
-  {volist name='menu.submenu' id='vo'}
-  <li><a href="{$vo.url}">{$vo.name}</a></li>
-  {/volist}
-</ul>
-</div>
-<div id="main" class="ml5" style="float: left;overflow: hidden; width: 965px;"> {__CONTENT__}
-</div>
-</div>
-</div>
-<div id="foot" style="clear: both; text-align: center;background:#80bf57  no-repeat left center;">
-<p class="white">
-  ©2014-{:date('Y')} 宜葆农科&nbsp;&nbsp;&nbsp;&nbsp;浙ICP备15009724号
-</p>
-</div>
+  <div id="login" style="border: 1px solid #999999;border-top:none;height: 768px;">
+    <div id="header" class="pr" style=" background:#F5F6F9  no-repeat left center;
+    height: 58px;border-bottom: 1px solid #cccccc;">
+    <span class="f21 bold black" style="padding-left: 30px;line-height: 58px;">宜葆平台管理后台</span> 
+    <!--<p class="mr5">{$user->name}</p>-->
+     <a href='__ADMIN_CONTROL__/auth/reset' class="black cp" style="margin-left: 860px;">修改密码</a>
+     <a href='__ADMIN_CONTROL__/auth/logout' class="black cp" >退出</a> 
+    </div>
+    <div id="content" class="pr">
+      <div id="menu" style="height: 709px; float: left;width: 200px;border-right: 1px solid #cccccc;">
+        <span style="height:56px;line-height: 56px;padding-left: 30px;color:#999999;">{$menu.name}</span>
+        <input type="hidden" id="hiddenId" value='0'>
+        <ul>
+          {volist name='menu.submenu' id='vo'}          
+          <li style="height: 30px;line-height: 30px;"class="{$active[$key]}" > 
+            <a href="{$vo.url}" class="{$active[$key]}" style="padding-left:60px;">{$vo.name}</a>
+          </li>
+        
+          {/volist}
+        </ul>
+      </div>
+      <div id="main" style="float: left;overflow: hidden; width: 999px;"> {__CONTENT__}
+      </div>
+    </div> 
+    <!--<div id="foot" style="clear: both; text-align: center;background:#80bf57  no-repeat left center;">
+      <p class="white">
+        ©2014-{:date('Y')} 宜葆农科&nbsp;&nbsp;&nbsp;&nbsp;浙ICP备15009724号
+      </p>
+    </div> -->
+  </div>
+  <!--<script type="text/javascript"> 
+    new Vue({
+        el: '#menu',
+        data: { 
+            message: ''
+        },
+        // ready: function () {
+        //        $('#menu li:first').attr('class','hover');
+        //        $('#menu li:first a').attr('style','padding-left: 60px;color:#66a36c;');
+        // },
+        methods: { 
+            change:function(event){         
+                var l=event.currentTarget;
+                $('#menu li').attr('class','no-hover');
+                $('#menu li').children('a').attr('style','padding-left: 60px;color:#000000');
+                $(l).attr('class','hover'); 
+                $(l).children('a').attr('style','padding-left: 60px;color:#66a36c;');
+            }
+        }
+    })
 
-</body>
-
+</script>-->
+</body> 
 </html>
