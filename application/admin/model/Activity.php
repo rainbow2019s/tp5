@@ -10,11 +10,23 @@ class Activity extends Model
      * 返回所有应用列表
      *
      */
-    public function ajaxQueryAllActivities()
+    public function ajaxQueryAllActivities($options)
     {
-        return Db::query('select id,name,domain,host_ip_address,entrance_url,
-            entrance_alias,timestamp from ep_activities where is_enabled=true');
+        return Db::query('select id,name,domain,host_ip_address,is_enabled,entrance_url,
+            entrance_alias,timestamp from ep_activities
+              where name REGEXP ? or domain REGEXP ? or host_ip_address REGEXP ? limit ?,?',
+              [$options->filter,$options->filter,$options->filter,
+                ($options->page-1)*$options->pageSize,$options->pageSize]);
 
+    }
+
+    /* 应用列表总行数 */
+    public function ajaxQueryAllActivitiesCount($options)
+    {
+        $rows= Db::query('select count(*) as count from ep_activities
+              where name REGEXP ? or domain REGEXP ? or host_ip_address REGEXP ?',
+              [$options->filter,$options->filter,$options->filter]);
+        return reset($rows);
     }
 
     /**
@@ -75,6 +87,26 @@ class Activity extends Model
             // 设置删除标记
             Db::execute('update ep_activities set is_enabled= not is_enabled where id=:id',['id'=>$activity->id]);  
             Db::execute('delete from ep_admin_app where ep_activities_id=:id',['id'=>$activity->id]);
+            Db::commit();
+            return true;
+
+        }catch(\Exception $e){
+            Db::rollback();
+        }
+
+        return false; 
+    }
+
+    /* 应用启用或禁止 */
+    public function ajaxEnabledActivity($activity)
+    {
+        Db::startTrans();
+        try{
+            // 设置删除标记
+            if($activity->is_enabled){
+                Db::execute('delete from ep_admin_app where ep_activities_id=:id',['id'=>$activity->id]);
+            }
+            Db::execute('update ep_activities set is_enabled= not is_enabled where id=:id',['id'=>$activity->id]);  
             Db::commit();
             return true;
 

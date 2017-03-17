@@ -59,12 +59,26 @@ class User extends Model
                             where is_enabled=true',[$user->id]);
     }
 
-    
-    public function ajaxQueryAllAdminUsers()
+    /* 模块管理员列表 */
+    public function ajaxQueryAllAdminUsers($options)
     {
-        return Db::query('select id,name 
+        return Db::query('select id,name,register,phone,email,is_enabled 
                             from ep_admin_users 
-                            where is_enabled=true and is_super=false');
+                            where is_super=false and 
+                                (name REGEXP ? or phone REGEXP ? or email REGEXP ?) limit ?,?',
+                                [$options->filter,$options->filter,$options->filter,
+                                    ($options->page-1)*$options->pageSize,$options->pageSize]);
+    }
+
+    /* 模块管理员列表行数 */
+    public function ajaxQueryAllAdminUsersCount($options)
+    {
+        $rows= Db::query('select count(*) as count
+                            from ep_admin_users 
+                            where is_super=false and 
+                                (name REGEXP ? or phone REGEXP ? or email REGEXP ?)',
+                                [$options->filter,$options->filter,$options->filter]);
+        return reset($rows);
     }
 
     // ---------------------- 管理员新增开始 -----------------------------------
@@ -163,7 +177,7 @@ class User extends Model
 
 
     /**
-     * 假删除进回收站
+     * 彻底删除
      * 业务功能绑定真删除
      *
      */
@@ -173,10 +187,8 @@ class User extends Model
         Db::startTrans();
         try{
             // 设置删除标记
-            Db::execute('update ep_admin_users set is_enabled=not is_enabled,timestamp=now() 
-                where id=:id',['id'=>$admin->id]);
-
             Db::execute('delete from ep_admin_app where ep_admin_users_id=:id',['id'=>$admin->id]);
+            Db::execute('delete from ep_admin_users where id=:id',['id'=>$admin->id]);
 
             Db::commit();
             return true;
@@ -215,6 +227,36 @@ class User extends Model
 
         return false;
   
+    }
+
+    /* 生成手机验证码 */
+    public function createSecurityCode($phone){
+        return Db::execute('update ep_admin_users set security_code=right(?,6),
+            expire_time=date_add(now(),interval 2 hour) where phone=?',
+            [$phone,$phone]);
+    }
+
+    /* 获取手机验证码 */
+    public function getSecurityCode($phone){
+        $rows=Db::query('select security_code from ep_admin_users
+          where phone=? and expire_time>now()',[$phone]);
+        return reset($rows);
+    }
+
+    /* 重置用户口令 */
+    public function resetUserPassword($user){
+        return Db::execute('update ep_admin_users 
+            set token=:token,password=:password,timestamp=now() 
+                where phone=:phone',
+            ['token'=>$user->token,'password'=>$user->password,'phone'=>$user->phone]);
+    }
+
+    /* 模块管理员启用禁用 */
+    public function ajaxUserEnabled($user){
+        return Db::execute('update ep_admin_users set is_enabled=!is_enabled,
+            timestamp=now() 
+            where id=:id',
+            ['id'=>$user->id]);
     }
 
 

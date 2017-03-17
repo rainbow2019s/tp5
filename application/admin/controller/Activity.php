@@ -66,7 +66,17 @@ class Activity extends Controller
     // 获取所有有效的应用
     public function ajaxQueryAllActivities()
     {
-        return Json($this->_activity->ajaxQueryAllActivities());
+        $params= input('params');
+        $options=json_decode($params);
+
+        $count=$this->_activity->ajaxQueryAllActivitiesCount($options)['count'];
+        $activities=new \stdClass;
+        $activities->data=$this->_activity->ajaxQueryAllActivities($options);
+        $activities->count=$count;
+        $activities->pages=ceil($count/$options->pageSize);
+        $activities->page=$options->page;
+
+        return Json($activities);
     }
 
 
@@ -119,6 +129,17 @@ class Activity extends Controller
         $rows=$this->_activity->ajaxEditActivity($activity);
 
         return $rows>0?Json(AjaxOutput::success('应用更新成功')):Json(AjaxOutput::error('应用更新失败'));  
+    }
+
+    /* 修改应用状态 如果禁止普通管理员引用将清除 */
+    public function ajaxEnabledActivity()
+    {
+        $params=input('params');
+        $activity=json_decode($params);
+
+        $status=$this->_activity->ajaxEnabledActivity($activity);
+
+        return $status?Json(AjaxOutput::success('应用状态修改成功')):Json(AjaxOutput::error('应用状态修改失败'));  
     }
 
     /**

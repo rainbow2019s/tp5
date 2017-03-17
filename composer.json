@@ -27,7 +27,8 @@
         "tanghao2018/email":">=1.0.0",
         "tanghao2018/encryption":">=1.0.0",
         "endroid/qrcode":">=1.7.4",
-        "topthink/think-captcha": "^1.0"
+        "topthink/think-captcha": "^1.0",
+        "fukuball/jieba-php":">=0.25"
      
     },
     "extra": {

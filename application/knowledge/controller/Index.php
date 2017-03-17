@@ -57,6 +57,22 @@ class Index extends Controller
     // ------------------------------------------------------------------
     public function index()
     {
+        $user=Session::get('user');
+        $this->assign('user',$user);
+        $menu=[];
+        $subMenu=SubMenu::getMenu('knowledge');
+        foreach($subMenu['submenu'] as $m ){
+            
+            $active='no_hover';
+            if($m['name']=='病虫自查'){
+                $active='hover';
+            }
+            $menu[]=$active;
+            
+        }
+        $this->assign('menu',SubMenu::getMenu('knowledge'));
+        $this->assign('active',$menu);
+        
         return view();
     }
 
@@ -112,7 +128,8 @@ class Index extends Controller
         $node=json_decode($params);
 
         $element=$this->_category->getElement($node->id);
-        $file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
+        //$file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
+        $file_name=ROOT_PATH.$element['file_name'];
         if(empty($element['file_name']) || !file_exists($file_name)){            
             return Json(['id'=>'',
                 'feature'=>'',
@@ -124,6 +141,10 @@ class Index extends Controller
         }
 
         $file = file_get_contents($file_name);
+        // 转换为发布文件 2017-03-08
+        $source = str_replace('tmp.json','json',$file_name);
+        $file = file_get_contents($source);
+        
         return json_decode($file);
     }
 

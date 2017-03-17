@@ -12,11 +12,20 @@ class Category extends Model
      */
     public function ajaxFirstLevelAdd($node)
     {
-        return Db::execute('insert into tech_category(name,academic,parent_id,depth,timestamp) 
-            values(:name,:academic,:parent_id,:depth,now())',
+        return Db::execute('insert into tech_category(name,academic,parent_id,depth,weight,timestamp) 
+            values(:name,:academic,:parent_id,:depth,:weight,now())',
             ['name'=>$node->name,'academic'=>$node->academic,'parent_id'=>$node->parent_id,
-                'depth'=>$node->depth]);
-    }   
+                'depth'=>$node->depth,'weight'=>$node->weight]);
+    }  
+
+
+    public function nameHasExist($node){
+
+        $sql="select count(*) as amount from tech_category where name=:name and id<>:id";
+        
+        $rows= Db::query($sql,['name'=>$node->name,'id'=>isset($node->id)?$node->id:0]);       
+        return reset($rows);
+    } 
 
     /**
      * 树的第一层节点更新
@@ -25,9 +34,9 @@ class Category extends Model
 
     public function ajaxFirstLevelEdit($node)
     {
-        return Db::execute('update tech_category set name=:name,academic=:academic,timestamp=now()
+        return Db::execute('update tech_category set name=:name,academic=:academic,weight=:weight,timestamp=now()
             where id=:id',
-            ['name'=>$node->name,'academic'=>$node->academic,'id'=>$node->id]);
+            ['name'=>$node->name,'academic'=>$node->academic,'weight'=>$node->weight,'id'=>$node->id]);
     }
 
     /**
@@ -36,11 +45,12 @@ class Category extends Model
      */
     public function ajaxSecondLevelAdd($node)
     {
-        return Db::execute('insert into tech_category(name,popular,parent_id,depth,timestamp) 
-            values(:name,:popular,:parent_id,:depth,now())',
+        return Db::execute('insert into tech_category(name,popular,parent_id,depth,weight,timestamp) 
+            values(:name,:popular,:parent_id,:depth,:weight,now())',
             ['name'=>$node->name,'popular'=>$node->popular,'parent_id'=>$node->parent_id,
-                'depth'=>$node->depth]);
+                'depth'=>$node->depth,'weight'=>$node->weight]);
     }
+
 
     /**
      * 树的第二层节点更新
@@ -48,9 +58,9 @@ class Category extends Model
      */
     public function ajaxSecondLevelEdit($node)
     {
-        return Db::execute('update tech_category set name=:name,popular=:popular,timestamp=now()
+        return Db::execute('update tech_category set name=:name,popular=:popular,weight=:weight,timestamp=now()
             where id=:id',
-            ['name'=>$node->name,'popular'=>$node->popular,'id'=>$node->id]);
+            ['name'=>$node->name,'popular'=>$node->popular,'weight'=>$node->weight,'id'=>$node->id]);
     }
 
     /**
@@ -65,6 +75,15 @@ class Category extends Model
                 'parent_id'=>$node->parent_id,'depth'=>$node->depth]);
     }
 
+    public function thirdNameHasExist($node){
+
+        $sql="select count(*) as amount from tech_category where name 
+                in( select name from tech_category where name=:name and parent_id=:parent_id and id<>:id)";
+        
+        $rows= Db::query($sql,['name'=>$node->name,'parent_id'=>$node->parent_id,'id'=>isset($node->id)?$node->id:0]);       
+        return reset($rows);
+    } 
+
     /**
      * 树的第三层节点编辑
      *
@@ -78,7 +97,7 @@ class Category extends Model
 
     public function ajaxThirdLevelTemplateEdit($node)
     {
-        return Db::execute('update tech_category set file_name=:file_name where id=:id',
+        return Db::execute('update tech_category set file_name=:file_name,timestamp=now() where id=:id',
             ['file_name'=>$node->file_name,'id'=>$node->id]);
     }
 
@@ -89,8 +108,9 @@ class Category extends Model
      */
     public function ajaxQuery($node)
     {
-        return Db::query('select id,name,img_url_1,img_url_2,parent_id,popular,academic,depth
-           from tech_category where parent_id=:parent_id',['parent_id'=>$node->parent_id]);
+        return Db::query('select id,name,img_url_1,img_url_2,parent_id,popular,academic,depth,func_node_amount(id) as amount
+           from tech_category where parent_id=:parent_id order by weight desc',
+           ['parent_id'=>$node->parent_id]);
     }
 
     /**
@@ -99,7 +119,7 @@ class Category extends Model
      */
     public function getElement($id)
     {
-        $rows= Db::query('select id,name,img_url_1,img_url_2,parent_id,popular,academic,depth,file_name
+        $rows= Db::query('select id,name,img_url_1,img_url_2,parent_id,popular,academic,depth,weight,file_name
            from tech_category where id=:id',['id'=>$id]);
 
         return reset($rows);
@@ -121,12 +141,12 @@ class Category extends Model
 
     public function ajaxCategory()
     {
-        return Db::query('select id,name from tech_category where parent_id=0');
+        return Db::query('select id,name from tech_category where parent_id=0 order by weight desc');
     }
 
     public function ajaxSubCategory($parentId)
     {
-        return Db::query('select id,name,img_url_1,img_url_2 from tech_category where parent_id=:parent_id',
+        return Db::query('select id,name,img_url_1,img_url_2 from tech_category where parent_id=:parent_id order by weight desc',
             ['parent_id'=>$parentId]);
     }
 

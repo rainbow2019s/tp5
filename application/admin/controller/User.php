@@ -56,6 +56,25 @@ class User extends Controller
         
         return Json($this->_user->ajaxQueryAllUsers($user));
     }
+
+    /* 模块管理员列表 */
+    public function ajaxQueryAllAdminUsers()
+    {
+        $params=input('params');
+        $options=json_decode($params);
+        if(!isset($options->filter)){
+            $options->filter='';
+        }
+
+        $count=$this->_user->ajaxQueryAllAdminUsersCount($options)['count'];
+        $users=new \stdClass;
+        $users->data=$this->_user->ajaxQueryAllAdminUsers($options);
+        $users->count=$count;
+        $users->pages=ceil($count/$options->pageSize);
+        $users->page=$options->page;
+
+        return Json($users);
+    }
     
     
     /**
@@ -130,6 +149,15 @@ class User extends Controller
         
         return $rows>0?Json(AjaxOutput::success('管理员帐号更新成功')):Json(AjaxOutput::error('管理员帐号更新失败'));
     }
+
+    /* 模块管理员启用禁用 */
+    public function ajaxUserEnabled(){
+        $params=input('params');
+        $user=json_decode($params);
+
+        $rows=$this->_user->ajaxUserEnabled($user);
+        return $rows>0?Json(AjaxOutput::success('管理员状态修改成功')):Json(AjaxOutput::error('管理员状态修改失败'));
+    }
     
     /**
     * 清除管理员帐号
@@ -197,16 +225,20 @@ class User extends Controller
     */
     public function ajaxAdminAllActivities()
     {
-        $adminUsers=[];
-        $users=$this->_user->ajaxQueryAllAdminUsers();
-        foreach($users as $user){
-            $adminUser=AjaxOutput::toObject($user);
+        $params=input('params');
+        $admin=json_decode($params);
+
+        return Json(AjaxOutput::success('',$this->_user->ajaxAdminBindAllActivities($admin)));
+        // $adminUsers=[];
+        // $users=$this->_user->ajaxQueryAllAdminUsers();
+        // foreach($users as $user){
+        //     $adminUser=AjaxOutput::toObject($user);
             
-            $adminUser->checklist=$this->_user->ajaxAdminBindAllActivities($adminUser);
-            $adminUsers[]=$adminUser;
-        }
+        //     $adminUser->checklist=$this->_user->ajaxAdminBindAllActivities($adminUser);
+        //     $adminUsers[]=$adminUser;
+        // }
         
-        return Json(AjaxOutput::success('',$adminUsers));
+        // return Json(AjaxOutput::success('',$adminUsers));
     }
     
     /**
@@ -223,5 +255,14 @@ class User extends Controller
         
         return $status?Json(AjaxOutput::success('修改权限成功')):Json(AjaxOutput::error('修改权限失败'));
         
+    }
+
+    /* 获取普通管理员绑定功能 */
+    public function getAdminBindActivities()
+    {
+        $params=input('params');
+        $admin=json_decode($params);
+
+        return Json($this->_user->getAdminBindActivities($admin));
     }
 }

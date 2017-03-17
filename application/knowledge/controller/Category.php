@@ -47,20 +47,43 @@ class Category extends Controller
     /**
      * 增加一个节点（深度最大为3）
      * 客户端算法：深度优先
+     * 20170307 增加weight
      */
     public function ajaxAdd()
     {
         $params=input('params');
         $node=json_decode($params);
         $rows=0;
-         switch($node->depth){
+
+        $tips='';
+        switch($node->depth){
              case 1:
-                $rows=$this->_category->ajaxFirstLevelAdd($node);
+                $amount=$this->_category->nameHasExist($node)['amount'];
+                $rows=0;
+                $tips='作物分类重复';
+                if($amount==0){
+                    $tips='';
+                    $rows=$this->_category->ajaxFirstLevelAdd($node);
+                }
                 break;
             case 2:
-                $rows=$this->_category->ajaxSecondLevelAdd($node);
+                $amount=$this->_category->nameHasExist($node)['amount'];
+                $rows=0;
+                $tips='作物名称重复';
+                if($amount==0){
+                    $tips='';
+                    $rows=$this->_category->ajaxSecondLevelAdd($node);
+                }
                 break;
             case 3:
+                $tips='病虫害名称重复';
+                $amount=$this->_category->thirdNameHasExist($node)['amount'];
+                if($amount>0){
+                    break;
+                }
+
+                $tips='';
+
                 $image1=uniqid();
                 $image2=uniqid();
 
@@ -81,7 +104,7 @@ class Category extends Controller
 
         }
 
-        return $rows>0?Json(AjaxOutput::success('添加节点成功')):Json(AjaxOutput::error('添加节点失败'));
+        return $rows>0?Json(AjaxOutput::success('添加节点成功')):Json(AjaxOutput::error("添加节点失败({$tips})"));
     }
 
         /**
@@ -93,14 +116,35 @@ class Category extends Controller
         $params=input('params');
         $node=json_decode($params);
         $rows=0;
+
+        $tips='';
          switch($node->depth){
              case 1:
-                $rows=$this->_category->ajaxFirstLevelEdit($node);
+                $amount=$this->_category->nameHasExist($node)['amount'];
+                $tips='作物分类重复';
+                $rows=0;
+                if($amount==0){
+                    $tips='';
+                    $rows=$this->_category->ajaxFirstLevelEdit($node);
+                }
                 break;
             case 2:
-                $rows=$this->_category->ajaxSecondLevelEdit($node);
+                $amount=$this->_category->nameHasExist($node)['amount'];
+                $rows=0;
+                $tips='作物名称重复';
+                if($amount==0){
+                    $tips='';
+                    $rows=$this->_category->ajaxSecondLevelEdit($node);
+                }
                 break;
             case 3:
+                $tips='病虫害名称重复';
+                $amount=$this->_category->thirdNameHasExist($node)['amount'];
+                if($amount>0){
+                    break;
+                }
+
+                $tips='';
 
                 $element=$this->_category->getElement($node->id);
 
@@ -136,7 +180,7 @@ class Category extends Controller
 
         }
 
-        return $rows>0?Json(AjaxOutput::success('更新节点成功')):Json(AjaxOutput::error('更新节点失败'));
+        return $rows>0?Json(AjaxOutput::success('更新节点成功')):Json(AjaxOutput::error("更新节点失败({$tips})"));
     }
 
     

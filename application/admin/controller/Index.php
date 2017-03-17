@@ -10,6 +10,9 @@ use ecopro\AjaxOutput;
 use ecopro\SubMenu;
 use email\Email;
 
+use Fukuball\Jieba\Jieba;
+use Fukuball\Jieba\Finalseg;
+
 /**
  * 普通管理员后台管理
  *
@@ -175,8 +178,18 @@ class Index extends Controller
 
 
 
+    public function jieba(){
 
+        //ini_set('memory_limit', '1024M');
 
+        Jieba::init();
+        Finalseg::init();
+
+        $seg_list = Jieba::cutForSearch("成虫多呈褐色，前翅具有肾状纹，卵半球形，初产为乳白色，
+            后变为棕色或褐色，老熟幼虫多呈褐色；危害主要来自幼虫取食玉米叶片，对玉米的苗期危害较大，
+                幼虫咬断玉米茎基部，常常造成缺苗断垄"); #搜索引擎模式
+        dump($seg_list);
+    }
 
 
 

@@ -83,13 +83,47 @@ class Prevention extends Controller
                 'images'=>[]]);
         }
 
-        $file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
+        //$file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
+        $file_name=ROOT_PATH.$element['file_name'];
+        // 转换为发布文件 2017-03-08
+        //$source = str_replace('tmp.json','json',$file_name);
         $file = file_get_contents($file_name);
 
         return json_decode($file);
     }
 
+    // 暂存文件 2017-03-08
     public function ajaxEdit()
+    {
+        $params=input('params');
+        $node=json_decode($params);
+
+        $element=$this->_category->getElement($node->id);
+                
+        $file_name=uniqid();
+        $file_name="public".DS."uploads".DS."knowledge".DS."lib".DS."{$file_name}.tmp.json";
+        if(!empty($element['file_name'])){
+            //$file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
+            $file_name=ROOT_PATH.$element['file_name'];
+            @unlink($file_name);
+            $file_name=$element['file_name'];
+        }
+        
+        // 加入tmp 2017-03-08
+        //$json_file="public".DS."uploads".DS."knowledge".DS."lib".DS."{$file_name}.tmp.json";
+        $json_file=$file_name;
+        $path=ROOT_PATH.$json_file;
+        file_put_contents($path,$params);
+
+        //$node->file_name=DS.$json_file;
+        $node->file_name=$json_file;
+        $rows=$this->_category->ajaxThirdLevelTemplateEdit($node);
+        
+        return $rows>0?Json(AjaxOutput::success('暂存成功')):Json(AjaxOutput::error('暂存失败'));
+    }
+
+    // 发布文件 2017=03=08
+    public function ajaxRelease()
     {
         $params=input('params');
         $node=json_decode($params);
@@ -97,85 +131,13 @@ class Prevention extends Controller
         $element=$this->_category->getElement($node->id);
 
         if(!empty($element['file_name'])){
-            $file_name=substr(ROOT_PATH,0,-1).$element['file_name'];
-            unlink($file_name);
+            //$source=substr(ROOT_PATH,0,-1).$element['file_name'];
+            $source=ROOT_PATH.$element['file_name'];
+            $dest=str_replace('tmp.json','json',$source);
+            copy($source,$dest);
         }
-        
-        $file_name=uniqid();
-        $json_file="public".DS."uploads".DS."knowledge".DS."lib".DS."{$file_name}.json";
-        $path=ROOT_PATH.$json_file;
-        file_put_contents($path,$params);
 
-        $node->file_name=DS.$json_file;
-        $rows=$this->_category->ajaxThirdLevelTemplateEdit($node);
-        
-        return $rows>0?Json(AjaxOutput::success('文件编辑成功')):Json(AjaxOutput::error('文件编辑失败'));
+        return AjaxOutput::success('发布成功');
     }
 
-    
-
-    // public function upload()
-    // {
-    //     $file=$this->request->file('image');
-    //     $path=ROOT_PATH.'public'.DS.'uploads'.DS.'knowledge';
-    //     $info=$file->move($path);
-    //     if($info){
-    //         echo $info->getSaveName();
-    //         exit;
-    //     }
-
-    //     echo $file->getError();
-    // }
-
-
-    // public function add()
-    // {
-    //     //dump($this->_categ)
-
-    //     $node=new \stdClass;
-    //     $node->name='西瓜';
-    //     $node->classify='作物类';
-    //     $node->img_url='20161227/f49b3b3d3be526c0aa2fbb94237e21cf.jpg';
-    //     $node->parent_id=0;
-    //     $node->parent_name='';
-    //     $node->popular='瓜果类';
-    //     $node->academic='葫芦科';
-
-    //     $rows=$this->_category->addCropAndDiseaseNode($node);
-    //     return $rows;
-
-    // }
-
-    // public function add2()
-    // {
-    //     //dump($this->_categ)
-
-    //     $node=new \stdClass;
-    //     //$node->name='戴帽出土';
-    //     $node->name='猝倒病';
-    //     $node->classify='病害类';
-    //     $node->img_url='20161227/f49b3b3d3be526c0aa2fbb94237e21cf.jpg';
-    //     $node->parent_id=1;
-    //     $node->parent_name='西瓜';
-    //     $node->popular='';
-    //     $node->academic='';
-
-    //     $rows=$this->_category->addCropAndDiseaseNode($node);
-    //     return $rows;
-
-    // }
-
-    // public function query()
-    // {
-    //     //$result=$this->_category->getCropClassify();
-    //     //$result=$this->_category->getSelectCropDisease(1);
-    //     $result=$this->_category->getBlurSearch('猝倒');
-
-    //     return Json($result);
-    // }
-
-    // public function getCropClassify($callback='')
-    // {
-    //     return $callback!=''?Json($this->_category->getCropClassify()):Jsonp($this->_category->getCropClassify());
-    // }
 }

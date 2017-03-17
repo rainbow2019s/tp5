@@ -217,7 +217,7 @@ return [
         'type'           => '',
         // 是否自动开启 SESSION
         'auto_start'     => true,
-        'path'           => 'G:/xampp/tmp/tp5',
+        'path'           => 'f:/Projects/ThinkPHP/tmp',
         //'name'           => 'tp5',
     ],
 
